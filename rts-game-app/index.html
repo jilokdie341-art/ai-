@@ -1,0 +1,3225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>졸라맨 국가전략전</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0e14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="국가전략전">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+  :root{
+    --bg:#0a0e14; --panel:#12161f; --panel-2:#181d29; --line:#252b3a;
+    --gold:#e8b339; --player:#3fd4c0; --enemy:#e35b6a; --text:#c9d3e0; --text-dim:#6b7c8f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:'Chakra Petch',sans-serif;overflow:hidden;}
+  #app{display:flex;flex-direction:column;height:100%;position:relative;}
+
+  /* ---------- MENU ---------- */
+  #menu{
+    position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 0%, #182030 0%, #05070a 75%);gap:22px;padding:20px;overflow-y:auto;
+  }
+  #menu h1{font-size:34px;letter-spacing:6px;margin:0;color:#fff;text-shadow:0 0 20px rgba(63,212,192,.5);}
+  #menu .sub{color:var(--text-dim);font-size:13px;letter-spacing:2px;margin-top:-14px;}
+  .factionRow{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;max-width:900px;}
+  .factionCard{
+    width:230px;background:var(--panel);border:2px solid var(--line);border-radius:8px;padding:16px;cursor:pointer;
+    transition:all .15s;text-align:left;
+  }
+  .factionCard:hover{transform:translateY(-4px);}
+  .factionCard h2{margin:0 0 4px 0;font-size:19px;}
+  .factionCard .playstyle{font-size:12px;color:var(--text-dim);margin-bottom:10px;}
+  .factionCard .statline{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);line-height:1.7;}
+  .factionCard .heroName{margin-top:10px;font-size:12px;color:var(--gold);}
+  .menuBtns{display:flex;gap:12px;margin-top:6px;}
+  .menuBtn{
+    background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:10px 20px;border-radius:5px;
+    font-family:'Chakra Petch',sans-serif;font-weight:600;cursor:pointer;font-size:13px;letter-spacing:1px;
+  }
+  .menuBtn:hover{border-color:var(--player);color:#fff;}
+  .missionList{display:flex;flex-direction:column;gap:6px;width:280px;max-width:92vw;font-size:12px;}
+  .missionList div{padding:7px 10px;background:var(--panel-2);border-radius:4px;border:1px solid var(--line);display:flex;justify-content:space-between;}
+  .missionList div.locked{opacity:.4;}
+  .diffBtn{
+    background:var(--panel-2);border:1px solid var(--line);color:var(--text-dim);padding:7px 16px;border-radius:5px;
+    font-family:'Chakra Petch',sans-serif;font-weight:600;cursor:pointer;font-size:12px;letter-spacing:1px;
+  }
+  .diffBtn.active{border-color:var(--player);color:#fff;background:#1b2330;}
+  #pointsDisplay{font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:13px;}
+
+  #researchPanel{display:none;flex-direction:column;gap:8px;width:520px;max-width:92vw;}
+  .researchItem{
+    display:flex;justify-content:space-between;align-items:center;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:5px;padding:10px 14px;font-size:12px;
+  }
+  .researchItem .rname{font-weight:600;color:#fff;}
+  .researchItem .rdesc{color:var(--text-dim);font-size:11px;}
+  .researchItem button{
+    background:var(--player);border:none;color:#04201c;font-weight:700;padding:7px 14px;border-radius:4px;
+    cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;
+  }
+  .researchItem button:disabled{background:#333;color:#777;cursor:not-allowed;}
+  .researchItem.owned{border-color:var(--player);}
+
+  /* ===== 스킨 상점 ===== */
+  #shopPanel{flex-direction:column;gap:26px;width:900px;max-width:94vw;align-items:center;}
+  .shopNation{width:100%;}
+  .shopNationHeader{
+    display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 4px;
+    border-bottom:2px solid var(--line);position:relative;
+  }
+  .shopNationHeader .flag{width:14px;height:14px;border-radius:3px;box-shadow:0 0 14px currentColor;}
+  .shopNationHeader h3{margin:0;font-size:16px;letter-spacing:3px;font-weight:700;}
+  .shopGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;}
+  .skinCard{
+    position:relative;border-radius:10px;padding:2px;overflow:hidden;
+    background:linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0));
+    transition:transform .18s ease;
+  }
+  .skinCard:hover{transform:translateY(-4px);}
+  .skinCard.legendary::before{
+    content:'';position:absolute;inset:-2px;border-radius:10px;
+    background:conic-gradient(from var(--ang,0deg), var(--skinCol), transparent 30%, var(--skinCol) 60%, transparent 90%);
+    animation:shopSpin 3.5s linear infinite;
+    z-index:0;
+  }
+  @keyframes shopSpin{ to{ --ang:360deg; } }
+  @property --ang{ syntax:'<angle>'; inherits:false; initial-value:0deg; }
+  .skinCardInner{
+    position:relative;z-index:1;background:#0d1119;border-radius:9px;padding:14px 12px;
+    height:100%;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;
+    border:1px solid rgba(255,255,255,0.06);
+  }
+  .skinPreview{
+    width:76px;height:76px;border-radius:50%;position:relative;
+    background:radial-gradient(circle at 35% 30%, var(--skinCol2,var(--skinCol)), var(--skinCol) 55%, #05070a 100%);
+    box-shadow:0 0 22px var(--skinCol), inset 0 0 14px rgba(255,255,255,0.25);
+    display:flex;align-items:center;justify-content:center;font-size:26px;
+  }
+  .skinName{font-weight:700;font-size:13px;color:#fff;letter-spacing:.5px;}
+  .skinTier{font-size:9px;letter-spacing:2px;text-transform:uppercase;opacity:.7;}
+  .skinDesc{font-size:10.5px;color:var(--text-dim);line-height:1.4;min-height:28px;}
+  .skinPriceRow{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:2px;}
+  .skinBtn{
+    width:100%;padding:8px;border-radius:6px;border:none;font-weight:700;font-size:11.5px;
+    cursor:pointer;font-family:'Chakra Petch',sans-serif;letter-spacing:.5px;transition:filter .12s;
+  }
+  .skinBtn:hover{filter:brightness(1.15);}
+  .skinBtn.buy{background:linear-gradient(90deg,#ffd24f,#ff9f43);color:#241800;}
+  .skinBtn.equip{background:var(--panel-2);border:1px solid var(--skinCol,var(--player));color:#fff;}
+  .skinBtn.equipped{background:transparent;border:1px solid var(--player);color:var(--player);cursor:default;}
+  .skinBtn:disabled{opacity:.4;cursor:not-allowed;}
+  .skinBadge{
+    position:absolute;top:8px;right:8px;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;
+    background:rgba(255,210,79,0.15);color:#ffd24f;border:1px solid rgba(255,210,79,0.4);letter-spacing:1px;
+  }
+  .skinCard.mythic .skinPreview{ animation:mythicPulse 1.8s ease-in-out infinite; }
+  @keyframes mythicPulse{
+    0%,100%{ box-shadow:0 0 22px var(--skinCol), inset 0 0 14px rgba(255,255,255,0.25); }
+    50%{ box-shadow:0 0 42px var(--skinCol), 0 0 18px var(--skinCol2,var(--skinCol)), inset 0 0 20px rgba(255,255,255,0.4); }
+  }
+  .skinCard.mythic .skinName{
+    background:linear-gradient(90deg, var(--skinCol), var(--skinCol2,var(--skinCol)), var(--skinCol));
+    background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:mythicText 2.5s linear infinite;
+  }
+  @keyframes mythicText{ to{ background-position:200% center; } }
+  .devBtn{
+    background:#1a2230;border:1px solid #3a4656;color:#c9d3e0;padding:6px 8px;border-radius:4px;
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;cursor:pointer;text-align:left;
+  }
+  .devBtn:hover{border-color:#7c8a99;color:#fff;}
+  .devBtn.active{border-color:#5fd68a;color:#5fd68a;}
+
+  /* ---------- GAME UI ---------- */
+  #gameWrap{display:none;flex-direction:column;height:100%;}
+  #topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:13px;flex-wrap:wrap;gap:6px 14px;row-gap:4px;}
+  #topbar .title{font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:15px;letter-spacing:1.5px;color:var(--player);}
+  .res-block{display:flex;gap:18px;align-items:center;}
+  .res-swatch{width:9px;height:9px;background:var(--gold);border-radius:1px;box-shadow:0 0 6px var(--gold);display:inline-block;}
+  #main{flex:1;display:flex;min-height:0;min-width:0;}
+  #canvasWrap{position:relative;flex:1;background:#080b10;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  canvas{display:block;background:#0d1119;cursor:crosshair;touch-action:none;}
+  #touchHint{display:none;position:absolute;left:10px;bottom:10px;background:rgba(10,14,20,.85);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-size:11px;color:var(--text-dim);line-height:1.6;z-index:15;pointer-events:none;}
+  @media (pointer:coarse){ #touchHint{display:block;} }
+  #side{width:270px;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;padding:14px;gap:12px;overflow-y:auto;}
+  #side h3{margin:0 0 6px 0;font-size:11px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:6px;}
+  #selInfo{font-size:13px;line-height:1.5;min-height:60px;}
+  #selInfo .selName{color:var(--player);font-weight:600;font-size:14px;}
+  .hpbarMini{height:5px;background:#000;border-radius:2px;overflow:hidden;margin-top:4px;border:1px solid #222;}
+  .heroCard{
+    background:var(--panel-2);border:1px solid #4a3f1a;border-radius:5px;padding:7px 9px;margin-bottom:6px;
+    cursor:pointer; transition:border-color .12s;
+  }
+  .heroCard:hover{border-color:#ffd24f;}
+  .heroCard .hname{font-size:12px;font-weight:600;color:#ffd24f;display:flex;justify-content:space-between;}
+  .heroCard .hbarBg{height:6px;background:#000;border-radius:2px;overflow:hidden;margin-top:4px;border:1px solid #4a3f1a;}
+  .heroCard .hbarFill{height:100%;background:#ffd24f;}
+
+  .selUnitCard{
+    flex:0 0 auto;width:44px;cursor:pointer;text-align:center;user-select:none;
+  }
+  .selUnitCard .selPortrait{
+    width:34px;height:34px;border-radius:5px;border:2px solid rgba(255,255,255,0.15);
+    display:flex;align-items:center;justify-content:center;font-size:14px;margin:0 auto;
+  }
+  .selUnitCard:hover .selPortrait{border-color:#fff;}
+  .selUnitCard .selHpBg{height:4px;background:#000;border-radius:2px;overflow:hidden;margin-top:3px;border:1px solid #222;}
+  .selUnitCard .selHpFill{height:100%;}
+  .selUnitCard .selName{font-size:8.5px;color:var(--text-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #selectionBar::-webkit-scrollbar{height:6px;}
+  #selectionBar::-webkit-scrollbar-thumb{background:var(--player);border-radius:3px;}
+  #selectionBar::-webkit-scrollbar-track{background:rgba(255,255,255,0.06);border-radius:3px;}
+  .hpbarMini > div{height:100%;background:var(--player);}
+  .btn{background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:9px 10px;font-family:'Chakra Petch',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left;border-radius:3px;display:flex;justify-content:space-between;transition:all .12s;}
+  .btn:hover:not(:disabled){border-color:var(--player);color:#fff;background:#1b2330;}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+  .btn .cost{color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:12px;}
+  .btnGroup{display:flex;flex-direction:column;gap:6px;}
+  #log{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);line-height:1.6;max-height:130px;overflow-y:auto;flex-shrink:0;}
+  #log div{border-left:2px solid var(--line);padding-left:6px;margin-bottom:2px;}
+  #hint{font-size:11px;color:var(--text-dim);line-height:1.6;}
+  #hint b{color:var(--text);}
+  #overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,6,9,.9);flex-direction:column;gap:14px;z-index:20;}
+  #overlay h1{font-size:40px;letter-spacing:6px;margin:0;}
+  #overlay .rewardLine{font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:14px;}
+  #overlay button{background:var(--player);border:none;color:#04201c;font-weight:700;padding:12px 26px;font-family:'Chakra Petch',sans-serif;font-size:14px;letter-spacing:2px;border-radius:3px;cursor:pointer;}
+  ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+
+  @media (max-width: 760px){
+    #main{flex-direction:column;}
+    #canvasWrap{flex:1 1 auto; min-height:280px;}
+    #side{width:100%; max-height:34vh; border-left:none; border-top:1px solid var(--line);}
+    #menu h1{font-size:24px;letter-spacing:3px;}
+    .factionCard{width:100%; max-width:320px;}
+    #topbar{font-size:11px;padding:6px 10px;}
+    #topbar .title{font-size:12px;}
+    .res-block{gap:10px;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="menu">
+    <h1>졸라맨 국가전략전</h1>
+    <div class="sub">STICKMAN NATIONAL STRATEGY WAR</div>
+    <div id="pointsDisplay">보유 포인트: 0 P</div>
+
+    <div id="factionScreen">
+      <div class="factionRow" id="factionRow"></div>
+      <div class="missionList" id="missionList" style="margin:18px auto 0;"></div>
+      <div id="diffRow" style="display:flex;gap:8px;justify-content:center;margin-top:4px;"></div>
+      <div class="menuBtns" style="justify-content:center;">
+        <button class="menuBtn" id="btnResearch">🔧 연구소</button>
+        <button class="menuBtn" id="btnShop" style="border-color:#ffd24f;color:#ffd24f;">🎨 스킨 상점</button>
+        <button class="menuBtn" id="btnDevMode" style="border-color:#7c8a99;color:#7c8a99;">🛠️ 개발자 모드: OFF</button>
+      </div>
+    </div>
+
+    <div id="researchPanel"></div>
+    <div class="menuBtns" id="researchBackWrap" style="display:none;">
+      <button class="menuBtn" id="btnBackFromResearch">← 돌아가기</button>
+    </div>
+
+    <div id="shopPanel" style="display:none;"></div>
+    <div class="menuBtns" id="shopBackWrap" style="display:none;">
+      <button class="menuBtn" id="btnBackFromShop">← 돌아가기</button>
+    </div>
+
+    <div id="devPassModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:center;justify-content:center;">
+      <div style="background:var(--panel);border:1px solid #5fd68a;border-radius:8px;padding:24px 28px;text-align:center;min-width:260px;">
+        <div style="font-size:14px;color:#5fd68a;font-weight:700;letter-spacing:1px;margin-bottom:12px;">🔒 개발자 모드 비밀번호</div>
+        <input id="devPassInput" type="password" maxlength="8" style="width:100%;background:var(--panel-2);border:1px solid var(--line);color:#fff;padding:9px 10px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:14px;text-align:center;letter-spacing:4px;box-sizing:border-box;" placeholder="••••">
+        <div id="devPassError" style="color:var(--enemy);font-size:11px;margin-top:6px;height:14px;"></div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="menuBtn" id="devPassCancel" style="flex:1;">취소</button>
+          <button class="menuBtn" id="devPassSubmit" style="flex:1;border-color:#5fd68a;color:#5fd68a;">확인</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="gameWrap">
+    <div id="topbar">
+      <div class="title" id="matchTitle">KOREA <span style="color:var(--enemy)">VS</span> JAPAN</div>
+      <div class="res-block">
+        <div><span class="res-swatch"></span> <span id="goldVal">0</span> GOLD</div>
+        <div style="color:var(--player)">■ <span id="unitCount">0</span> UNITS</div>
+        <div style="color:var(--player)">🚩 <span id="cpCount">0</span>/<span id="cpTotal">0</span></div>
+        <div id="popDisplay" style="color:var(--player);">👥 <span id="popUsedVal">0</span>/<span id="popCapVal">8</span></div>
+        <div id="objectiveLine" style="color:var(--gold);display:none;"></div>
+      </div>
+      <div id="clock">00:00</div>
+      <button id="btnMusic" title="배경음악 켜기/끄기" style="background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:4px 9px;cursor:pointer;font-size:13px;margin-left:8px;">🔊</button>
+    </div>
+    <div id="main">
+      <div id="canvasWrap">
+        <canvas id="game" width="1000" height="680" tabindex="0" style="outline:none;"></canvas>
+        <div id="touchHint">탭: 선택 · 드래그: 범위 선택<br>길게 누르기: 이동/공격/채집/수리<br>두 손가락 드래그: 화면 이동 · 미니맵 탭: 이동</div>
+        <div id="selectionBar" style="display:none;position:absolute;left:8px;right:196px;bottom:8px;z-index:20;background:rgba(10,14,20,0.82);border:1px solid var(--line);border-radius:6px;padding:6px;gap:5px;overflow-x:auto;flex-wrap:nowrap;scroll-behavior:smooth;"></div>
+        <div id="cheatBox" style="display:none;position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:26;background:rgba(10,12,16,0.94);border:1px solid #5fd68a;border-radius:6px;padding:8px 10px;">
+          <input id="cheatInput" type="text" autocomplete="off" placeholder="코드 입력 후 Enter" style="width:220px;background:var(--panel-2);border:1px solid var(--line);color:#fff;padding:6px 8px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;box-sizing:border-box;">
+        </div>
+        <div id="devPanel" style="display:none;position:absolute;top:10px;right:10px;z-index:25;background:rgba(10,12,16,0.92);border:1px solid #7c8a99;border-radius:6px;padding:8px;width:150px;font-family:'JetBrains Mono',monospace;">
+          <div style="color:#7c8a99;font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:6px;">🛠️ DEV PANEL</div>
+          <div style="display:flex;flex-direction:column;gap:4px;" id="devButtons"></div>
+        </div>
+        <div id="overlay">
+          <h1 id="overlayTitle">VICTORY</h1>
+          <div class="rewardLine" id="rewardLine"></div>
+          <button id="btnReturnMenu">메뉴로 돌아가기</button>
+        </div>
+      </div>
+      <div id="side">
+        <div><h3>Selection</h3><div id="selInfo">아무것도 선택되지 않음</div></div>
+        <div><h3>Actions</h3><div class="btnGroup" id="actions"></div></div>
+        <div id="heroRosterWrap" style="display:none;"><h3>🌟 영웅 목록</h3><div id="heroRoster"></div></div>
+        <div><h3>Battle Log</h3><div id="log"></div></div>
+        <div style="margin-top:auto"><h3>Controls</h3>
+          <div id="hint"><b>좌클릭 드래그</b>: 유닛 선택<br><b>더블클릭</b>: 화면에 보이는 같은 종류 유닛 전체 선택<br><b>우클릭</b>: 이동 / 채집 / 공격<br><b>생산건물만 선택 후 우클릭</b>: 집결지(랠리 포인트) 지정 — 생산된 유닛이 자동으로 그곳까지 이동<br><b>Q</b>: 유휴 상태인 공병으로 순환 선택+이동<br><b>Ctrl+숫자(1~9)</b>: 선택 유닛을 부대로 지정 · <b>숫자만</b>: 그 부대 선택+이동 (부대 없으면 저장된 화면으로 이동)<br><b>부대(2기 이상) 선택 후 F</b>: 대형 그리기 모드 — 드래그로 선을 그으면 그 형태로 일렬 정렬 (Esc/우클릭으로 취소)<br><b>A</b>: 공격 이동 모드 (조준점 커서로 바뀜, 클릭한 곳으로 이동하며 도중에 적을 만나면 자동 교전 · Esc/우클릭으로 취소)<br><b>Enter</b>: 코드 입력창 열기<br><b>공병으로 아군 건물 우클릭</b>: 수리 (골드 소모)<br><b>Shift+좌클릭</b>: 선택 추가<br><b>방향키</b> 또는 <b>화면 가장자리</b>: 카메라 이동<br><b>미니맵 클릭</b>: 해당 위치로 이동<br><b>Shift+숫자(1~9)</b>: 현재 화면 위치 지정<br>🔤 <b>생산 단축키</b>: 건물/공병 선택 시 버튼의 알파벳 키로 즉시 생산·건설 (예: S=공병, M=보병)<br>🚩 <b>점령 지점</b>: 중립 수비대를 먼저 처치해야 점령할 수 있어요. 처치 후 유닛을 혼자 두면 점령되고, 보유 중엔 골드가 계속 들어와요.<br>🏭 <b>팩토리</b>: 병영과 별도로 차량 유닛을 생산해요.<br>🚁 <b>항공기지</b>: 헬기(공중 유닛)를 생산해요.<br>🛡 <b>방패병</b> (병영, 단축키 P): 반경 65 이내 아군이 받는 피해를 대신 흡수합니다.<br>👥 <b>인구수</b>: 시작 8, 서플라이 디포(단축키 U) 1개당 +10. 영웅은 인구를 차지하지 않아요. 한도 도달 시 생산이 막힙니다.<br>영웅을 선택하면 오라 효과를 확인할 수 있습니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+// ============ FACTION / UNIT DATA (from design doc) ============
+const RANGE_SCALE = 22, SPEED_SCALE = 16;
+const FACTIONS = {
+  korea: {
+    id:'korea', name:'대한민국', accent:'#4fa8ff', playstyle:'유연하고 안정적인 운영형',
+    worker:{ name:'공병', hp:30, atk:2, def:1, range:16, speed:70, cost:50, buildTime:5, radius:8 },
+    combat:{ name:'보병', hp:100, atk:14, def:3, range:4*RANGE_SCALE, speed:4*SPEED_SCALE, cost:55, buildTime:6, radius:9, atkSpeed:1.2, equipment:'전술 소총' },
+    shield:{ name:'방패 보병', hp:170, atk:8, def:14, range:20, speed:50, cost:70, buildTime:7, radius:10, atkSpeed:1.3, equipment:'전술 방패' },
+    vehicle:{ name:'정찰 장갑차', hp:150, atk:18, def:7, range:3*RANGE_SCALE, speed:6*SPEED_SCALE, cost:90, buildTime:9, radius:11, atkSpeed:1.1, equipment:'경량 복합장갑' },
+    vehicle2:{ name:'다연장로켓', hp:104, atk:37, def:4, range:140, speed:40, cost:140, buildTime:15, radius:12, atkSpeed:1.8, equipment:'유도 로켓포드' },
+    vehicle3:{ name:'기계화보병 수송차', hp:190, atk:21, def:9, range:70, speed:70, cost:100, buildTime:10, radius:12, atkSpeed:1.1, equipment:'복합 방탄판' },
+    mechInfantry:{ name:'기계화보병', hp:60, atk:10, def:4, range:66, speed:64, cost:0, buildTime:0, radius:8, atkSpeed:1.2, equipment:'기계화 경장갑' },
+    air:{ name:'AH 공격헬기', hp:170, atk:26, def:5, range:95, speed:135, cost:165, buildTime:16, radius:12, atkSpeed:1.0, equipment:'유도 미사일 포드' },
+    hero:{ name:'사령관', hp:260, atk:10, def:8, range:60, speed:60, radius:12, cooldown:35, radius2:12,
+      ability:'aura_korea', abilityName:'전술 지휘', abilityDesc:'주변 아군 사거리 +30%, 이동속도 +100%', equipment:'고급 통제 기술' },
+  },
+  japan: {
+    id:'japan', name:'일본', accent:'#ff5577', playstyle:'빠르게 치고 빠지는 전술형',
+    worker:{ name:'공병', hp:28, atk:2, def:1, range:16, speed:74, cost:50, buildTime:5, radius:8 },
+    combat:{ name:'사무라이 돌격병', hp:165, atk:24, def:5, range:1*RANGE_SCALE, speed:5*SPEED_SCALE, cost:75, buildTime:7, radius:9, atkSpeed:1.0, equipment:'카타나 갑옷', firstStrike:true },
+    shield:{ name:'대형방패 무사', hp:190, atk:10, def:12, range:20, speed:55, cost:75, buildTime:7, radius:10, atkSpeed:1.2, equipment:'대형 방패' },
+    vehicle:{ name:'경장갑 바이크', hp:92, atk:22, def:3, range:1*RANGE_SCALE, speed:7*SPEED_SCALE, cost:70, buildTime:7, radius:9, atkSpeed:0.85, equipment:'스텔스 도장' },
+    vehicle2:{ name:'경전차', hp:207, atk:24, def:8, range:50, speed:64, cost:110, buildTime:11, radius:12, atkSpeed:1.1, equipment:'경량장갑판' },
+    vehicle3:{ name:'고속 강습차', hp:126, atk:26, def:5, range:30, speed:100, cost:85, buildTime:8, radius:10, atkSpeed:0.95, equipment:'급습 사양' },
+    air:{ name:'스텔스 무장헬기', hp:130, atk:32, def:3, range:75, speed:155, cost:155, buildTime:14, radius:11, atkSpeed:0.9, equipment:'초경량 기체' },
+    hero:{ name:'닌자대장', hp:230, atk:9, def:6, range:55, speed:70, radius:12, cooldown:28,
+      ability:'stealth_japan', abilityName:'은신 술법', abilityDesc:'주변 아군 은신 (40 이내로 접근하지 않으면 발각되지 않음)', equipment:'강화닌자복' },
+  },
+  usa: {
+    id:'usa', name:'미국', accent:'#ffd24f', playstyle:'정면에서 밀어붙이는 압박형',
+    worker:{ name:'공병', hp:32, atk:2, def:2, range:16, speed:66, cost:50, buildTime:5, radius:8 },
+    combat:{ name:'중전차 브루저', hp:380, atk:32, def:9, range:Math.round(4.9*RANGE_SCALE), speed:3*SPEED_SCALE, cost:170, buildTime:15, radius:14, atkSpeed:1.2, equipment:'강화 포신' },
+    shield:{ name:'중장갑 방패병', hp:230, atk:9, def:18, range:20, speed:45, cost:85, buildTime:8, radius:10, atkSpeed:1.3, equipment:'중장갑 방패' },
+    vehicle:{ name:'자주포', hp:173, atk:31, def:6, range:5*RANGE_SCALE, speed:Math.round(2.5*SPEED_SCALE), cost:135, buildTime:14, radius:13, atkSpeed:1.6, equipment:'견인 곡사포' },
+    vehicle2:{ name:'강습 장갑차', hp:253, atk:22, def:11, range:50, speed:56, cost:120, buildTime:12, radius:13, atkSpeed:1.0, equipment:'복합장갑' },
+    vehicle3:{ name:'궤도 보병전투차', hp:270, atk:27, def:12, range:60, speed:50, cost:145, buildTime:13, radius:13, atkSpeed:1.1, equipment:'중장갑판' },
+    air:{ name:'중무장 건십', hp:230, atk:35, def:7, range:105, speed:115, cost:215, buildTime:20, radius:13, atkSpeed:1.2, equipment:'중기관포+로켓포드' },
+    hero:{ name:'포격 사령관', hp:300, atk:12, def:10, range:70, speed:55, radius:13, cooldown:35,
+      ability:'barrage_usa', abilityName:'화력 지원 요청', abilityDesc:'주변 아군 공격력 대폭 증가 (+30%)', equipment:'전술 지휘기' },
+  },
+};
+
+const RESEARCH_DEFS = [
+  { id:'ammo',   name:'강화 탄약',         desc:'모든 유닛 공격력 +10%',        cost:80,  goldCost:120 },
+  { id:'reload', name:'고속 재장전 탄창', desc:'공격 속도 15% 향상',           cost:90,  goldCost:140 },
+  { id:'armor',  name:'강화 장갑',         desc:'모든 유닛 체력 +15%',          cost:100, goldCost:150 },
+  { id:'radar',  name:'레이더 모듈',       desc:'교전 감지 범위 +20%',          cost:70,  goldCost:100 },
+  { id:'alloy',  name:'강화 합금',         desc:'건물 체력 +20%',               cost:110, goldCost:150 },
+  { id:'energy', name:'에너지 코어',       desc:'영웅 오라 반경 +20%',          cost:130, goldCost:180 },
+  { id:'fcs',    name:'사격 통제 시스템', desc:'모든 유닛 사거리 +10%',        cost:100, goldCost:150 },
+];
+
+const BUILDING_BASE = {
+  hq:       { name:'본진',      hp:600, radius:34, cost:0,   buildTime:0,  trains:['worker'], isDropoff:true },
+  barracks: { name:'병영',      hp:320, radius:26, cost:110, buildTime:10, trains:['combat','shield'] },
+  factory:  { name:'팩토리',    hp:340, radius:27, cost:140, buildTime:13, trains:['vehicle','vehicle2','vehicle3'] },
+  airbase:  { name:'항공기지',  hp:300, radius:26, cost:200, buildTime:18, trains:['air'] },
+  tower:    { name:'방어 타워', hp:220, radius:18, cost:85,  buildTime:7,  atk:16, range:150, atkSpeed:1.0 },
+  lab:      { name:'연구소',    hp:180, radius:22, cost:100, buildTime:9,  isLab:true },
+  depot:    { name:'저장고',    hp:150, radius:18, cost:65,  buildTime:6,  isDropoff:true },
+  outpost:  { name:'전초기지',  hp:420, radius:28, cost:230, buildTime:16, trains:['worker'], isDropoff:true },
+  autominer:{ name:'자동 채굴기', hp:160, radius:19, cost:170, buildTime:12, isAutoMiner:true, mineRange:75, mineRate:2.2 },
+  supply:   { name:'서플라이 디포', hp:130, radius:16, cost:75, buildTime:6, isSupply:true, supplyAmount:10 },
+};
+const WORKER_BUILDABLE = ['barracks','factory','airbase','tower','lab','depot','outpost','autominer','supply'];
+
+// 인구수(서플라이) 시스템: 영웅은 인구를 차지하지 않음
+const POP_BASE_CAP = 8;
+const POP_COST = { worker:1, combat:1, shield:2, vehicle:2, vehicle2:3, vehicle3:3, air:3, mechInfantry:0 };
+function popUsed(team){
+  let sum=0;
+  for(const en of entities){
+    if(en.dead || en.kind!=='unit' || en.team!==team || en.isHero) continue;
+    sum += POP_COST[en.role]||0;
+  }
+  return sum;
+}
+function popCap(team){
+  let cap = POP_BASE_CAP;
+  for(const en of entities){
+    if(en.dead || en.kind!=='building' || en.team!==team || !BUILDING_BASE[en.type].isSupply || en.buildProgress<1) continue;
+    cap += BUILDING_BASE[en.type].supplyAmount;
+  }
+  return cap;
+}
+
+// 단축키: 유닛 생산(역할별) / 건물 건설(종류별)
+const UNIT_HOTKEYS = { worker:'s', combat:'m', shield:'p', vehicle:'v', vehicle2:'c', vehicle3:'x', air:'h' };
+const BUILDING_HOTKEYS = { barracks:'b', factory:'f', airbase:'h', tower:'t', lab:'l', depot:'d', outpost:'o', autominer:'g', supply:'u' };
+
+// ============ SESSION / META STATE ============
+let metaPoints = 0;
+let devMode = false;
+let devTimeScale = 1;
+let devGodMode = false;
+let researchOwned = new Set();
+
+// ============ MENU LOGIC ============
+const menuEl = document.getElementById('menu');
+const gameWrapEl = document.getElementById('gameWrap');
+const factionRow = document.getElementById('factionRow');
+const missionListEl = document.getElementById('missionList');
+const researchPanel = document.getElementById('researchPanel');
+const factionScreen = document.getElementById('factionScreen');
+const researchBackWrap = document.getElementById('researchBackWrap');
+
+function renderPoints(){
+  document.getElementById('pointsDisplay').textContent = `보유 포인트: ${metaPoints} P`;
+}
+
+function renderFactionCards(){
+  factionRow.innerHTML='';
+  for(const key of Object.keys(FACTIONS)){
+    const f = FACTIONS[key];
+    const card = document.createElement('div');
+    card.className='factionCard';
+    card.style.borderColor = f.accent+'55';
+    card.innerHTML = `
+      <h2 style="color:${f.accent}">${f.name}</h2>
+      <div class="playstyle">${f.playstyle}</div>
+      <div class="statline">
+        전투유닛: ${f.combat.name}<br>
+        HP ${f.combat.hp} · ATK ${f.combat.atk} · DEF ${f.combat.def}<br>
+        장비: ${f.combat.equipment}
+      </div>
+      <div class="heroName">★ 영웅: ${f.hero.name} — ${f.hero.abilityName}</div>
+    `;
+    card.onclick = ()=> startGame(key);
+    factionRow.appendChild(card);
+  }
+}
+
+const MISSIONS = ['튜토리얼','섬멸전','기지 방어','전령','구출','호위','보스전','최종 전쟁'];
+const PLAYABLE_MISSIONS = [0,1,2,3,4,5,6,7]; // 전체 개방
+let selectedMissionIndex = 1;
+function renderMissions(){
+  missionListEl.innerHTML='';
+  MISSIONS.forEach((m,i)=>{
+    const d = document.createElement('div');
+    const playable = PLAYABLE_MISSIONS.includes(i);
+    if(!playable) d.className='locked';
+    if(playable && i===selectedMissionIndex) d.style.cssText='border-color:var(--player);background:#1b2330;';
+    d.innerHTML = `<span>${m}</span><span>${playable?(i===selectedMissionIndex?'✅':'▶'):'🔒'}</span>`;
+    if(playable){
+      d.style.cursor='pointer';
+      d.onclick = ()=>{ selectedMissionIndex=i; renderMissions(); };
+    }
+    missionListEl.appendChild(d);
+  });
+}
+
+const DIFFICULTIES = [
+  { id:'easy',   name:'쉬움' },
+  { id:'normal', name:'보통' },
+  { id:'hard',   name:'어려움' },
+];
+let aiDifficulty = 'normal';
+function renderDifficulty(){
+  const el = document.getElementById('diffRow');
+  el.innerHTML='';
+  for(const d of DIFFICULTIES){
+    const btn = document.createElement('button');
+    btn.className = 'diffBtn'+(aiDifficulty===d.id?' active':'');
+    btn.textContent = `AI: ${d.name}`;
+    btn.onclick = ()=>{ aiDifficulty=d.id; renderDifficulty(); };
+    el.appendChild(btn);
+  }
+}
+
+function renderResearch(){
+  researchPanel.innerHTML='';
+  for(const r of RESEARCH_DEFS){
+    const owned = researchOwned.has(r.id);
+    const row = document.createElement('div');
+    row.className='researchItem'+(owned?' owned':'');
+    row.innerHTML = `<div><div class="rname">${r.name} ${owned?'✅':''}</div><div class="rdesc">${r.desc}</div></div>`;
+    const btn = document.createElement('button');
+    btn.textContent = owned ? '연구 완료' : `${r.cost} P`;
+    btn.disabled = owned || metaPoints < r.cost;
+    btn.onclick = ()=>{
+      if(metaPoints < r.cost || owned) return;
+      metaPoints -= r.cost; researchOwned.add(r.id);
+      renderPoints(); renderResearch();
+    };
+    row.appendChild(btn);
+    researchPanel.appendChild(row);
+  }
+}
+
+document.getElementById('btnResearch').onclick = ()=>{
+  factionScreen.style.display='none';
+  researchPanel.style.display='flex';
+  researchBackWrap.style.display='flex';
+  renderResearch();
+};
+document.getElementById('btnBackFromResearch').onclick = ()=>{
+  factionScreen.style.display='block';
+  researchPanel.style.display='none';
+  researchBackWrap.style.display='none';
+};
+
+// ===== 스킨 상점 =====
+const SKIN_PACKS = {
+  korea: [
+    { id:'default', name:'표준 전투복',   tier:'기본',     icon:'🎖️', color:'#4fa8ff', color2:'#dff3ff', price:0,   fx:0, desc:'대한민국군 표준 지급 장비' },
+    { id:'ranger',  name:'레인저 그린',   tier:'커먼',     icon:'🌲', color:'#5fd68a', color2:'#dfffe8', price:100, fx:0, desc:'특수부대 표준 위장 도색' },
+    { id:'ice',     name:'아이스 팬텀',   tier:'프리미엄', icon:'❄️', color:'#7ff4ff', color2:'#ffffff', price:300, fx:1, desc:'극지 작전용 냉각 위장 슈트 (이동 시 냉기 궤적)' },
+    { id:'dark',    name:'다크 스틸',     tier:'레전더리', icon:'🛡️', color:'#3a6bff', color2:'#0a1030', price:450, fx:2, desc:'차세대 스텔스 강화합금 아머 (펄스 오라)', legendary:true },
+    { id:'aurora',  name:'오로라 커맨더', tier:'미씩',     icon:'🌌', color:'#a78bfa', color2:'#e0d4ff', price:700, fx:3, desc:'차원 관측소에서 발견된 미확인 에너지 슈트 (이중 오라+궤적)', legendary:true, mythic:true },
+  ],
+  japan: [
+    { id:'default', name:'표준 도복',     tier:'기본',     icon:'⚔️', color:'#ff5577', color2:'#ffe0e8', price:0,   fx:0, desc:'일본군 표준 지급 장비' },
+    { id:'ink',     name:'먹빛 인법',     tier:'커먼',     icon:'🖋️', color:'#8a8f99', color2:'#e6e8ec', price:100, fx:0, desc:'그림자 속에 스며드는 먹빛 인법 장비' },
+    { id:'sakura',  name:'블러드 사쿠라', tier:'프리미엄', icon:'🌸', color:'#ff2e6d', color2:'#ffd6e6', price:300, fx:1, desc:'벚꽃 문양이 새겨진 특수 도복 (이동 시 꽃잎 궤적)' },
+    { id:'oni',     name:'황금 오니',     tier:'레전더리', icon:'👹', color:'#ffb703', color2:'#7a0000', price:450, fx:2, desc:'전설의 오니 가면을 본뜬 전투 슈트 (펄스 오라)', legendary:true },
+    { id:'thunder', name:'천둥의 화신',   tier:'미씩',     icon:'⚡', color:'#ffe74c', color2:'#3d0a5c', price:700, fx:3, desc:'뇌신의 힘이 깃든 궁극 슈트 (이중 오라+궤적)', legendary:true, mythic:true },
+  ],
+  usa: [
+    { id:'default', name:'표준 전투복',   tier:'기본',     icon:'⭐', color:'#ffd24f', color2:'#fff7e0', price:0,   fx:0, desc:'미군 표준 지급 장비' },
+    { id:'desert',  name:'데저트 스톰',   tier:'커먼',     icon:'🏜️', color:'#d9b877', color2:'#fff3d6', price:100, fx:0, desc:'사막 작전용 표준 위장 도색' },
+    { id:'stealth', name:'스텔스 옵스',   tier:'프리미엄', icon:'🌙', color:'#6b7a5e', color2:'#dfe8d2', price:300, fx:1, desc:'야간 침투 작전용 특수 도장 (이동 시 그림자 궤적)' },
+    { id:'chrome',  name:'프리덤 크롬',   tier:'레전더리', icon:'🦅', color:'#5ec8ff', color2:'#ffffff', price:450, fx:2, desc:'성조기 모티프 크롬 도장 최상급 사양 (펄스 오라)', legendary:true },
+    { id:'orbital', name:'오르비탈 스트라이커', tier:'미씩', icon:'🛰️', color:'#00f5ff', color2:'#001a33', price:700, fx:3, desc:'궤도 위성 연동 최상급 강습 슈트 (이중 오라+궤적)', legendary:true, mythic:true },
+  ],
+};
+let ownedSkins = { korea:new Set(['default']), japan:new Set(['default']), usa:new Set(['default']) };
+let equippedSkin = { korea:'default', japan:'default', usa:'default' };
+
+function applySkins(){
+  for(const fk of Object.keys(FACTIONS)){
+    const def = SKIN_PACKS[fk].find(s=>s.id===equippedSkin[fk]);
+    if(def){ FACTIONS[fk].accent = def.color; FACTIONS[fk].accent2 = def.color2||def.color; FACTIONS[fk].skinFx = def.fx||0; }
+  }
+}
+
+function renderShop(){
+  const shopPanel = document.getElementById('shopPanel');
+  shopPanel.innerHTML='';
+  if(devMode){
+    const banner = document.createElement('div');
+    banner.style.cssText='width:100%;text-align:center;padding:10px;margin-bottom:4px;background:rgba(95,214,138,0.12);border:1px solid #5fd68a;border-radius:6px;color:#5fd68a;font-size:12px;font-weight:600;letter-spacing:.5px;';
+    banner.textContent='🛠️ 개발자 모드 활성 — 모든 스킨을 무료로 장착할 수 있습니다';
+    shopPanel.appendChild(banner);
+  }
+  for(const fk of Object.keys(SKIN_PACKS)){
+    const fac = FACTIONS[fk];
+    const section = document.createElement('div');
+    section.className='shopNation';
+    const header = document.createElement('div');
+    header.className='shopNationHeader';
+    header.style.color = fac.accent;
+    header.innerHTML = `<div class="flag" style="background:${fac.accent};"></div><h3>${fac.name}</h3>`;
+    section.appendChild(header);
+    const grid = document.createElement('div');
+    grid.className='shopGrid';
+    for(const skin of SKIN_PACKS[fk]){
+      const owned = devMode || ownedSkins[fk].has(skin.id);
+      const equipped = equippedSkin[fk]===skin.id;
+      const card = document.createElement('div');
+      card.className='skinCard'+(skin.legendary?' legendary':'')+(skin.mythic?' mythic':'');
+      card.style.setProperty('--skinCol', skin.color);
+      card.style.setProperty('--skinCol2', skin.color2||skin.color);
+      card.innerHTML = `
+        <div class="skinCardInner">
+          ${skin.price>0?`<div class="skinBadge">${skin.tier}</div>`:''}
+          <div class="skinPreview">${skin.icon}</div>
+          <div class="skinName">${skin.name}</div>
+          <div class="skinTier" style="color:${skin.color};">${skin.tier}</div>
+          <div class="skinDesc">${skin.desc}</div>
+          <div class="skinPriceRow"></div>
+        </div>`;
+      const priceRow = card.querySelector('.skinPriceRow');
+      const btn = document.createElement('button');
+      if(equipped){
+        btn.className='skinBtn equipped'; btn.textContent='✅ 장착됨'; btn.disabled=true;
+      } else if(owned){
+        btn.className='skinBtn equip'; btn.style.setProperty('--skinCol',skin.color); btn.textContent='장착하기';
+        btn.onclick=()=>{ equippedSkin[fk]=skin.id; applySkins(); renderShop(); renderFactionCards(); };
+      } else {
+        btn.className='skinBtn buy'; btn.textContent=`${skin.price} P 구매`;
+        btn.disabled = metaPoints < skin.price;
+        btn.onclick=()=>{
+          if(metaPoints < skin.price) return;
+          metaPoints -= skin.price; ownedSkins[fk].add(skin.id);
+          equippedSkin[fk]=skin.id; applySkins();
+          renderPoints(); renderShop(); renderFactionCards();
+        };
+      }
+      priceRow.appendChild(btn);
+      grid.appendChild(card);
+    }
+    section.appendChild(grid);
+    shopPanel.appendChild(section);
+  }
+}
+document.getElementById('btnShop').onclick = ()=>{
+  factionScreen.style.display='none';
+  document.getElementById('shopPanel').style.display='flex';
+  document.getElementById('shopBackWrap').style.display='flex';
+  renderShop();
+};
+document.getElementById('btnBackFromShop').onclick = ()=>{
+  factionScreen.style.display='block';
+  document.getElementById('shopPanel').style.display='none';
+  document.getElementById('shopBackWrap').style.display='none';
+};
+function setDevModeUI(){
+  const b = document.getElementById('btnDevMode');
+  b.textContent = `🛠️ 개발자 모드: ${devMode?'ON':'OFF'}`;
+  b.style.color = devMode ? '#5fd68a' : '#7c8a99';
+  b.style.borderColor = devMode ? '#5fd68a' : '#7c8a99';
+}
+function tryDevPassword(){
+  const input = document.getElementById('devPassInput');
+  const err = document.getElementById('devPassError');
+  if(input.value === '0920'){
+    devMode = true;
+    setDevModeUI();
+    document.getElementById('devPassModal').style.display='none';
+    input.value=''; err.textContent='';
+  } else {
+    err.textContent='비밀번호가 올바르지 않습니다.';
+    input.value=''; input.focus();
+  }
+}
+document.getElementById('btnDevMode').onclick = (e)=>{
+  if(devMode){
+    devMode = false;
+    setDevModeUI();
+    return;
+  }
+  if(e && e.currentTarget) e.currentTarget.blur(); // 버튼이 포커스를 쥐고 있으면 이후 Enter가 버튼을 다시 클릭해버려 입력창 포커스 인식하게
+  const modal = document.getElementById('devPassModal');
+  modal.style.display='flex';
+  const input = document.getElementById('devPassInput');
+  document.getElementById('devPassError').textContent='';
+  input.value='';
+  input.focus();
+  setTimeout(()=>input.focus(), 30);
+  setTimeout(()=>input.focus(), 120);
+};
+document.getElementById('devPassSubmit').onclick = tryDevPassword;
+document.getElementById('devPassCancel').onclick = ()=>{ document.getElementById('devPassModal').style.display='none'; };
+document.getElementById('devPassInput').addEventListener('keydown', e=>{
+  e.stopPropagation();
+  if(e.key==='Enter'){ e.preventDefault(); tryDevPassword(); }
+  if(e.key==='Escape') document.getElementById('devPassModal').style.display='none';
+});
+
+applySkins();
+renderFactionCards();
+renderMissions();
+renderDifficulty();
+renderPoints();
+
+// ============ 배경음악 (Web Audio API로 직접 합성 - 저작권 없는 오리지널 루프) ============
+let audioCtx=null, musicGain=null, musicEnabled=true, musicScheduler=null, nextNoteTime=0, chordIndex=0;
+let lastCombatTime=-999;
+const CHORDS = [
+  [110.00,130.81,164.81],   // Am
+  [98.00, 116.54,146.83],   // Gm (텐션)
+  [87.31, 116.54,164.81],   // F
+  [110.00,130.81,164.81],   // Am
+];
+const CHORD_DUR = 4.2;
+
+function initAudio(){
+  if(audioCtx) return;
+  try{
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = musicEnabled ? 0.22 : 0;
+    musicGain.connect(audioCtx.destination);
+  }catch(e){ audioCtx=null; }
+}
+function playPad(freqs, startTime, dur){
+  for(const f of freqs){
+    const osc = audioCtx.createOscillator();
+    osc.type='sine'; osc.frequency.value=f;
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(0.0001, startTime);
+    g.gain.linearRampToValueAtTime(0.13, startTime+1.4);
+    g.gain.linearRampToValueAtTime(0.0001, startTime+dur);
+    osc.connect(g); g.connect(musicGain);
+    osc.start(startTime); osc.stop(startTime+dur+0.1);
+  }
+}
+function playBass(freq, startTime, dur){
+  const osc = audioCtx.createOscillator();
+  osc.type='triangle'; osc.frequency.value=freq/2;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(0.20, startTime);
+  g.gain.exponentialRampToValueAtTime(0.001, startTime+dur*0.85);
+  osc.connect(g); g.connect(musicGain);
+  osc.start(startTime); osc.stop(startTime+dur);
+}
+function playPulse(startTime, accent){
+  const osc = audioCtx.createOscillator();
+  osc.type='square'; osc.frequency.value = accent?660:880;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(accent?0.05:0.03, startTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, startTime+0.09);
+  osc.connect(g); g.connect(musicGain);
+  osc.start(startTime); osc.stop(startTime+0.12);
+}
+function playArpeggio(freqs, startTime, stepDur){
+  // 전투 중일 때 코드 톤을 빠르게 오르내리며 긴장감 연출
+  const seq = [freqs[0]*2, freqs[1]*2, freqs[2]*2, freqs[1]*2];
+  seq.forEach((f,i)=>{
+    const t = startTime + i*stepDur;
+    const osc = audioCtx.createOscillator();
+    osc.type='sawtooth'; osc.frequency.value=f;
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(0.001, t);
+    g.gain.linearRampToValueAtTime(0.05, t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+stepDur*0.9);
+    osc.connect(g); g.connect(musicGain);
+    osc.start(t); osc.stop(t+stepDur);
+  });
+}
+function scheduleMusic(){
+  if(!audioCtx) return;
+  while(nextNoteTime < audioCtx.currentTime + 1.0){
+    const chord = CHORDS[chordIndex % CHORDS.length];
+    playPad(chord, nextNoteTime, CHORD_DUR);
+    playBass(chord[0], nextNoteTime, CHORD_DUR);
+    for(let i=0;i<4;i++) playPulse(nextNoteTime + i*(CHORD_DUR/4), i===0);
+    if(elapsed - lastCombatTime < 6){ playArpeggio(chord, nextNoteTime, CHORD_DUR/8); }
+    nextNoteTime += CHORD_DUR;
+    chordIndex++;
+  }
+}
+function startMusic(){
+  initAudio();
+  if(!audioCtx) return;
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  nextNoteTime = audioCtx.currentTime + 0.15;
+  chordIndex = 0;
+  if(musicScheduler) clearInterval(musicScheduler);
+  musicScheduler = setInterval(scheduleMusic, 250);
+  scheduleMusic();
+}
+function pauseMusic(){
+  if(musicScheduler){ clearInterval(musicScheduler); musicScheduler=null; }
+}
+function toggleMusic(){
+  musicEnabled = !musicEnabled;
+  if(musicGain) musicGain.gain.value = musicEnabled ? 0.22 : 0;
+  if(musicEnabled && !musicScheduler && audioCtx) startMusic();
+  const btn = document.getElementById('btnMusic');
+  if(btn) btn.textContent = musicEnabled ? '🔊' : '🔇';
+}
+
+// ============ GAME ENGINE ============
+const VIEW_W = 1000, VIEW_H = 680;       // 화면(뷰포트) 크기
+const WORLD_W = 3600, WORLD_H = 2400;    // 실제 맵 크기 (뷰포트보다 훨씬 큼 -> 화면 이동 가능)
+const AGGRO_RANGE = 150;
+const MINE_AMOUNT = 900, GATHER_AMOUNT = 10, GATHER_TIME = 1.1;
+const REPAIR_RATE = 32, REPAIR_GOLD_PER_HP = 0.18;
+const HERO_AURA_RADIUS = 170;
+const SHIELD_PROTECT_RADIUS = 65;
+const DIFFICULTY_SETTINGS = {
+  easy:   { statMult:0.72, interval:3.6, armyThreshold:10, workerCap:5, startGold:130 },
+  normal: { statMult:0.88, interval:2.5, armyThreshold:8,  workerCap:6, startGold:180 },
+  hard:   { statMult:1.02, interval:1.5, armyThreshold:6,  workerCap:8, startGold:230 },
+};
+const CONTROL_CAPTURE_RATE = 22, CONTROL_DECAY_RATE = 14, CONTROL_GOLD_RATE = 5;
+const PAN_SPEED = 620, EDGE_MARGIN = 26;
+const MM_W = 174, MM_H = 116, MM_MARGIN = 12;
+const MM_X = VIEW_W - MM_W - MM_MARGIN, MM_Y = VIEW_H - MM_H - MM_MARGIN;
+
+let entities=[], mines=[], props=[], ponds=[], controlPoints=[], clouds=[], particles=[], projectiles=[], castRings=[], selection=[], idCounter=1;
+let matchResearch = new Set();
+let buildMode=null, attackMoveMode=false, formationMode=false, formationDragging=false, formationStart=null, gameOver=false, elapsed=0, dragStart=null, mouse={x:0,y:0,down:false};
+let killScore=0;
+let playerFactionKey=null, enemyFactionKey=null;
+let teams = { player:{gold:200}, enemy:{gold:200} };
+let camera = {x:0,y:0};
+let cameraBookmarks = {};
+let idleWorkerCycleIndex = -1;
+let missionMode = 'skirmish'; // 'skirmish' | 'defense' | 'rescue' | 'escort' | 'boss'
+const DEFENSE_DURATION = 480;
+let rescueTargets = []; // [{id, name, rescued, lost}]
+let tutorialStep = 0, tutorialInitialWorkers = 0, tutorialDummyId = null;
+const TUTORIAL_STEPS = [
+  { text:'드래그로 화면에 보이는 공병(일꾼)들을 선택해보세요.', check: ()=> selection.some(u=>u.kind==='unit'&&u.role==='worker') },
+  { text:'선택한 공병으로 근처 금색 원(광산)을 우클릭해서 채집을 보내보세요.', check: ()=> entities.some(u=>u.team==='player'&&u.role==='worker'&&!u.dead&&u.gatherState) },
+  { text:'본진(HQ)을 선택하고 공병을 하나 더 생산해보세요. (버튼 또는 단축키 S)', check: ()=> entities.filter(u=>u.team==='player'&&u.role==='worker'&&!u.dead).length > tutorialInitialWorkers },
+  { text:'공병을 선택하고 병영을 건설해보세요. (버튼 또는 단축키 B)', check: ()=> entities.some(e=>e.team==='player'&&e.type==='barracks') },
+  { text:'완성된 병영을 선택하고 보병을 생산해보세요. (버튼 또는 단축키 M)', check: ()=> entities.some(e=>e.team==='player'&&e.role==='combat'&&!e.dead) },
+  { text:'보병을 선택하고, 적 색깔로 서있는 훈련 인형을 우클릭으로 공격해보세요!', check: ()=> tutorialDummyId!==null && !entities.find(e=>e.id===tutorialDummyId && !e.dead) },
+  { text:'🎉 튜토리얼을 모두 완료했습니다! 이제 실전에 나서보세요.', check: ()=> false },
+];
+let rescueStage = 0;
+let rescueStageDefs = [];
+let escortId = null, escortWaypoints = [], escortWpIndex = 0;
+let bossId = null;
+let courierId = null, courierDeadline = 0, courierDest = null;
+let screenMouse = {x:VIEW_W/2,y:VIEW_H/2};
+let mouseOverCanvas = false;
+let keysDown = {};
+let isTouchDevice = false;
+let twoFingerPan = null;
+
+function clampCamera(){
+  camera.x = Math.max(0, Math.min(WORLD_W-VIEW_W, camera.x));
+  camera.y = Math.max(0, Math.min(WORLD_H-VIEW_H, camera.y));
+}
+const MOVE_KEYS = new Set(['arrowleft','arrowright','arrowup','arrowdown']);
+function handleKeyDown(e){
+  const rawKey = e.key.toLowerCase();
+  keysDown[rawKey] = true;
+  if(MOVE_KEYS.has(rawKey) && gameWrapEl.style.display!=='none'){ e.preventDefault(); }
+  // Shift를 누르면 e.key가 '1'->'!' 처럼 기호로 바뀌므로, 숫자 판별은 물리적 키(e.code)로 한다
+  const digitMatch = e.code && e.code.match(/^(?:Digit|Numpad)([1-9])$/);
+  if(digitMatch && gameWrapEl.style.display!=='none'){ e.preventDefault(); }
+  // 한글 IME 등이 켜져 있으면 e.key가 알파벳이 아닌 다른 문자로 바뀌므로,
+  // 알파벳 단축키는 물리적 키(e.code, 예: 'KeyF')를 기준으로 판별한다
+  const letterMatch = e.code && e.code.match(/^Key([A-Z])$/);
+  const hotkey = letterMatch ? letterMatch[1].toLowerCase() : rawKey;
+  handleHotkey(hotkey, e.shiftKey, digitMatch ? digitMatch[1] : null, e.ctrlKey||e.metaKey);
+}
+function handleKeyUp(e){ keysDown[e.key.toLowerCase()] = false; }
+
+let controlGroups = {}; // {번호: [유닛id, ...]}
+function handleCameraBookmark(k, shiftKey, ctrlKey){
+  if(ctrlKey){
+    const myUnits = selection.filter(s=>s.kind==='unit' && s.team==='player');
+    if(myUnits.length===0) return;
+    controlGroups[k] = myUnits.map(u=>u.id);
+    log(`🔢 부대 ${k}번 지정 (${myUnits.length}기)`,'player');
+    return;
+  }
+  if(shiftKey){
+    cameraBookmarks[k] = {x:camera.x, y:camera.y};
+    log(`📍 화면 ${k}번 지정`,'player');
+    return;
+  }
+  // 평범한 숫자키: 지정된 부대가 있으면 선택+이동, 없으면 저장된 화면 위치로 이동
+  const groupIds = controlGroups[k];
+  if(groupIds && groupIds.length){
+    const units = groupIds.map(id=>entities.find(e=>e.id===id && !e.dead)).filter(Boolean);
+    if(units.length){
+      selection = units;
+      renderSelection(); renderActions(); renderSelectionBar();
+      let cx=0, cy=0; for(const u of units){ cx+=u.x; cy+=u.y; } cx/=units.length; cy/=units.length;
+      camera.x = cx-VIEW_W/2; camera.y = cy-VIEW_H/2; clampCamera();
+      return;
+    }
+  }
+  if(cameraBookmarks[k]){
+    camera.x = cameraBookmarks[k].x;
+    camera.y = cameraBookmarks[k].y;
+    clampCamera();
+  }
+}
+function selectNextIdleWorker(){
+  const idle = entities.filter(u=>u.kind==='unit' && u.team==='player' && u.role==='worker' && !u.dead &&
+    !u.gatherState && !u.moveTarget && !u.attackTarget && !u.repairTarget && !u.attackMoveDest);
+  if(idle.length===0){ log('유휴 상태인 공병이 없습니다.','player'); return; }
+  idleWorkerCycleIndex = (idleWorkerCycleIndex+1) % idle.length;
+  const w = idle[idleWorkerCycleIndex];
+  selection = [w];
+  renderSelection(); renderActions(); renderSelectionBar();
+  camera.x = w.x-VIEW_W/2; camera.y = w.y-VIEW_H/2; clampCamera();
+}
+
+let cheatBoxOpen = false;
+function openCheatBox(){
+  if(gameWrapEl.style.display==='none') return;
+  cheatBoxOpen = true;
+  const box = document.getElementById('cheatBox');
+  const input = document.getElementById('cheatInput');
+  box.style.display='block';
+  input.value='';
+  setTimeout(()=>input.focus(), 10);
+}
+function closeCheatBox(){
+  cheatBoxOpen = false;
+  document.getElementById('cheatBox').style.display='none';
+  canvas.focus();
+}
+function executeCheat(raw){
+  const code = (raw||'').trim().toLowerCase();
+  if(code==='show me the money'){
+    teams.player.gold += 10000;
+    log('💰 치트 코드 사용: Show Me The Money (+10000 골드)','player');
+  } else if(code.length>0){
+    log('❓ 알 수 없는 코드입니다.','player');
+  }
+  closeCheatBox();
+}
+document.getElementById('cheatInput').addEventListener('keydown', e=>{
+  e.stopPropagation();
+  if(e.key==='Enter'){ executeCheat(e.target.value); }
+  else if(e.key==='Escape'){ closeCheatBox(); }
+});
+
+function handleHotkey(k, shiftKey, digit, ctrlKey){
+  if(gameWrapEl.style.display==='none') return; // 메뉴 화면에서는 무시
+  if(k==='escape'){
+    if(buildMode){ buildMode=null; renderActions(); }
+    if(attackMoveMode){ attackMoveMode=false; canvas.style.cursor=''; }
+    if(formationMode){ formationMode=false; formationDragging=false; formationStart=null; canvas.style.cursor=''; }
+    return;
+  }
+  if(k==='q' && !shiftKey && !ctrlKey){ selectNextIdleWorker(); return; }
+  if(k==='enter'){ openCheatBox(); return; }
+  if(k==='a' && !shiftKey){
+    const myUnits = selection.filter(s=>s.kind==='unit' && s.team==='player');
+    if(myUnits.length===0) return;
+    attackMoveMode = !attackMoveMode;
+    if(attackMoveMode) buildMode=null;
+    canvas.style.cursor = attackMoveMode ? 'none' : '';
+    return;
+  }
+  if(k==='f' && !shiftKey && !ctrlKey){
+    const myUnits = selection.filter(s=>s.kind==='unit' && s.team==='player');
+    if(myUnits.length>=2){
+      formationMode = !formationMode;
+      formationDragging = false; formationStart = null;
+      if(formationMode){ buildMode=null; attackMoveMode=false; }
+      canvas.style.cursor = formationMode ? 'none' : '';
+      if(formationMode) log('📐 대형 그리기 모드: 드래그로 선을 그으면 부대가 그 형태로 정렬합니다.','player');
+      return;
+    }
+    // 부대가 아니면(1기 이하) 아래로 흘려보내 평소처럼 F(팩토리 건설 등) 단축키로 처리
+  }
+  if(digit){ handleCameraBookmark(digit, shiftKey, ctrlKey); return; }
+  if(selection.length===0) return;
+  const en = selection[0];
+  if(en.kind==='building' && en.team==='player'){
+    const bdef = BUILDING_BASE[en.type];
+    if(bdef.trains && bdef.trains.length){
+      for(const role of bdef.trains){
+        if(UNIT_HOTKEYS[role]===k){ trainUnit(en, role); return; }
+      }
+    }
+  } else if(en.kind==='unit' && en.team==='player' && en.role==='worker'){
+    for(const bt of WORKER_BUILDABLE){
+      if(BUILDING_HOTKEYS[bt]===k){ buildMode = buildMode===bt?null:bt; renderActions(); return; }
+    }
+  }
+}
+window.addEventListener('keydown', handleKeyDown);
+window.addEventListener('keyup', handleKeyUp);
+window.addEventListener('blur', ()=>{ keysDown={}; }); // 창 포커스를 잃으면 키가 눌린 채로 고정되는 것 방지
+
+function updateCamera(dt){
+  let dx=0, dy=0;
+  if(keysDown['arrowleft']) dx-=1;
+  if(keysDown['arrowright']) dx+=1;
+  if(keysDown['arrowup']) dy-=1;
+  if(keysDown['arrowdown']) dy+=1;
+  if(!isTouchDevice && mouseOverCanvas && !mouse.down && !buildMode){
+    if(screenMouse.x < EDGE_MARGIN) dx-=1;
+    if(screenMouse.x > VIEW_W-EDGE_MARGIN) dx+=1;
+    if(screenMouse.y < EDGE_MARGIN) dy-=1;
+    if(screenMouse.y > VIEW_H-EDGE_MARGIN) dy+=1;
+  }
+  if(dx||dy){
+    const len = Math.hypot(dx,dy)||1;
+    camera.x += (dx/len)*PAN_SPEED*dt;
+    camera.y += (dy/len)*PAN_SPEED*dt;
+    clampCamera();
+  }
+}
+function isInMinimap(x,y){ return x>=MM_X && x<=MM_X+MM_W && y>=MM_Y && y<=MM_Y+MM_H; }
+function jumpCameraToMinimap(sx,sy){
+  const wx = (sx-MM_X)/MM_W*WORLD_W, wy=(sy-MM_Y)/MM_H*WORLD_H;
+  camera.x = wx-VIEW_W/2; camera.y = wy-VIEW_H/2;
+  clampCamera();
+}
+
+const canvas = document.getElementById('game');
+const canvasWrapEl = document.getElementById('canvasWrap');
+function fitCanvas(){
+  const availW = canvasWrapEl.clientWidth, availH = canvasWrapEl.clientHeight;
+  if(availW<10 || availH<10) return;
+  const ratio = 1000/680;
+  let w = availW, h = w/ratio;
+  if(h > availH){ h = availH; w = h*ratio; }
+  canvas.style.width = Math.floor(w)+'px';
+  canvas.style.height = Math.floor(h)+'px';
+}
+window.addEventListener('resize', fitCanvas);
+window.addEventListener('orientationchange', ()=> setTimeout(fitCanvas,150));
+setTimeout(fitCanvas, 0);
+const ctx = canvas.getContext('2d');
+
+function log(msg, cls){
+  const el = document.getElementById('log');
+  const d = document.createElement('div');
+  d.textContent = msg;
+  if(cls==='enemy') d.style.borderLeftColor='var(--enemy)';
+  if(cls==='player') d.style.borderLeftColor='var(--player)';
+  el.prepend(d);
+  while(el.children.length>40) el.removeChild(el.lastChild);
+}
+
+function hasResearch(id){ return researchOwned.has(id) || matchResearch.has(id); }
+function applyResearchToUnit(u){
+  if(hasResearch('ammo')) u.dmg *= 1.1;
+  if(hasResearch('reload')) u.atkSpeed *= 0.85;
+  if(hasResearch('armor')){ u.hp *= 1.15; u.maxHp = u.hp; }
+  if(hasResearch('fcs')) u.range *= 1.1;
+}
+function applyResearchToBuilding(b){
+  if(hasResearch('alloy')){ b.hp *= 1.2; b.maxHp = b.hp; }
+}
+// 연구소에서 즉석 구매한 연구를 현재 살아있는 아군 유닛/건물에도 즉시 반영
+function applyResearchEffectToExisting(id, team){
+  for(const en of entities){
+    if(en.dead || en.team!==team) continue;
+    if(en.kind==='unit'){
+      if(id==='ammo') en.dmg *= 1.1;
+      if(id==='reload') en.atkSpeed *= 0.85;
+      if(id==='armor'){ en.maxHp *= 1.15; en.hp *= 1.15; }
+      if(id==='fcs') en.range *= 1.1;
+    } else if(en.kind==='building'){
+      if(id==='alloy'){ en.maxHp *= 1.2; en.hp *= 1.2; }
+    }
+  }
+}
+
+function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
+function mod(n,m){ return ((n%m)+m)%m; }
+
+function makeUnit(role, team, x, y){
+  // role: 'worker' | 'combat' | 'hero'
+  const fKey = team==='player' ? playerFactionKey : enemyFactionKey;
+  const f = FACTIONS[fKey];
+  const def = f[role];
+  const u = {
+    kind:'unit', id:idCounter++, role, team, faction:fKey, x, y,
+    name:def.name, hp:def.hp, maxHp:def.hp, dmg:def.atk!==undefined?def.atk:0, def:def.def||0,
+    range:def.range, speed:def.speed, radius:def.radius, atkSpeed:def.atkSpeed||1.2,
+    atkCooldown:0, moveTarget:null, attackTarget:null, gatherState:null, mineTarget:null, attackMoveDest:null,
+    carrying:0, dead:false, firstStrike: !!def.firstStrike, freshEngage:false,
+    isHero: role==='hero', ability:def.ability, abilityName:def.abilityName, abilityDesc:def.abilityDesc,
+    accent: f.accent, accent2: f.accent2||f.accent, lastHit:-99, _legPhase:0, _isMoving:false, _facing:1, _trail:null, _trailTimer:0,
+  };
+  if(team==='player'){
+    applyResearchToUnit(u);
+  } else {
+    const mult = DIFFICULTY_SETTINGS[aiDifficulty].statMult;
+    u.hp *= mult; u.maxHp = u.hp; u.dmg *= mult;
+  }
+  return u;
+}
+function makeNeutralGuard(x, y){
+  return {
+    kind:'unit', id:idCounter++, role:'combat', team:'neutral', faction:null, x, y,
+    name:'중립 수비대', hp:130, maxHp:130, dmg:15, def:6,
+    range:70, speed:0, radius:9, atkSpeed:1.2,
+    atkCooldown:0, moveTarget:null, attackTarget:null, gatherState:null, mineTarget:null, attackMoveDest:null,
+    carrying:0, dead:false, firstStrike:false, freshEngage:false,
+    isHero:false, ability:null, abilityName:null, abilityDesc:null,
+    accent:'#9aa3ad', lastHit:-99, _legPhase:0, _isMoving:false, _facing:1,
+  };
+}
+function makeBuilding(type, team, x, y, instant){
+  const base = BUILDING_BASE[type];
+  const b = {
+    kind:'building', id:idCounter++, type, team, x, y,
+    hp: instant?base.hp:base.hp*0.15, maxHp:base.hp, radius:base.radius, dead:false,
+    queue:[], buildProgress: instant?1:0.15, buildTime:base.buildTime,
+    rallyX:x, rallyY:y+70,
+    dmg: base.atk||0, range: base.range||0, atkSpeed: base.atkSpeed||1, atkCooldown:0, attackTarget:null, def:0,
+  };
+  if(team==='player') applyResearchToBuilding(b);
+  return b;
+}
+
+// ---------- MAP ----------
+function setupMap(){
+  entities=[]; mines=[]; particles=[]; projectiles=[]; castRings=[]; selection=[]; killScore=0; elapsed=0; gameOver=false;
+  aiTimer=0; aiBuiltBarracks=false; aiBuiltFactory=false; aiBuiltAirbase=false;
+  lastCombatTime=-999;
+  teams = { player:{gold:200}, enemy:{gold:DIFFICULTY_SETTINGS[aiDifficulty].startGold} };
+  camera = {x:0,y:0};
+  cameraBookmarks = {};
+  controlGroups = {};
+  idleWorkerCycleIndex = -1;
+  matchResearch = new Set();
+
+  const pBaseX=180, pBaseY=WORLD_H-180, eBaseX=WORLD_W-180, eBaseY=180;
+  entities.push(makeBuilding('hq','player',pBaseX,pBaseY,true));
+  entities.push(makeBuilding('hq','enemy',eBaseX,eBaseY,true));
+  for(let i=0;i<3;i++){
+    entities.push(makeUnit('worker','player',pBaseX+(i-1)*30,pBaseY+50));
+    entities.push(makeUnit('worker','enemy',eBaseX+(i-1)*30,eBaseY-50));
+  }
+  const heroP = makeUnit('hero','player',pBaseX+40,pBaseY-10); entities.push(heroP);
+  const heroE = makeUnit('hero','enemy',eBaseX-40,eBaseY+10); entities.push(heroE);
+
+  mines = [
+    // 본진 근처 근거리 광산 (초반 자원 확보용)
+    {x:pBaseX+300, y:pBaseY-90, amount:MINE_AMOUNT},{x:pBaseX+90, y:pBaseY-300, amount:MINE_AMOUNT},
+    {x:eBaseX-300, y:eBaseY+90, amount:MINE_AMOUNT},{x:eBaseX-90, y:eBaseY+300, amount:MINE_AMOUNT},
+    // 중앙/외곽 분산 광산
+    {x:780,y:1875,amount:MINE_AMOUNT},{x:420,y:1470,amount:MINE_AMOUNT},
+    {x:2895,y:510,amount:MINE_AMOUNT},{x:3195,y:960,amount:MINE_AMOUNT},
+    {x:1800,y:1200,amount:MINE_AMOUNT},{x:1290,y:1680,amount:MINE_AMOUNT},
+    {x:2340,y:720,amount:MINE_AMOUNT},{x:1050,y:630,amount:MINE_AMOUNT},
+    {x:2670,y:1845,amount:MINE_AMOUNT},{x:1800,y:300,amount:MINE_AMOUNT},
+    {x:1800,y:2130,amount:MINE_AMOUNT},{x:450,y:300,amount:MINE_AMOUNT},
+    {x:3150,y:2130,amount:MINE_AMOUNT},
+  ];
+
+  // 추가 광산을 맵 곳곳에 더 뿌려서 자원 경쟁 지점을 늘림
+  let extraMineTries=0;
+  while(mines.length<17+25 && extraMineTries<3000){
+    extraMineTries++;
+    const x = 200+Math.random()*(WORLD_W-400), y = 200+Math.random()*(WORLD_H-400);
+    if(dist({x,y},{x:pBaseX,y:pBaseY})<380) continue;
+    if(dist({x,y},{x:eBaseX,y:eBaseY})<380) continue;
+    let tooClose=false;
+    for(const m of mines){ if(dist({x,y},m)<190){ tooClose=true; break; } }
+    if(tooClose) continue;
+    mines.push({x,y,amount:MINE_AMOUNT});
+  }
+
+  // 점령 지점(전략 거점) 생성 - 맵 중앙대에 분산 배치, 지속 점령 시 골드 수급
+  controlPoints=[];
+  let ctTries=0;
+  while(controlPoints.length<3 && ctTries<600){
+    ctTries++;
+    const x = WORLD_W*0.25 + Math.random()*WORLD_W*0.5;
+    const y = 220 + Math.random()*(WORLD_H-440);
+    if(dist({x,y},{x:pBaseX,y:pBaseY})<520) continue;
+    if(dist({x,y},{x:eBaseX,y:eBaseY})<520) continue;
+    let bad=false;
+    for(const m of mines){ if(dist({x,y},m)<120){ bad=true; break; } }
+    for(const c of controlPoints){ if(dist({x,y},c)<480){ bad=true; break; } }
+    if(bad) continue;
+    controlPoints.push({x,y,radius:46,owner:null,progress:0,_lastCapturingTeam:null});
+  }
+  for(const cp of controlPoints){
+    const guardCount = 4;
+    for(let i=0;i<guardCount;i++){
+      const ang = (Math.PI*2/guardCount)*i + Math.random()*0.3;
+      const gx = cp.x + Math.cos(ang)*26, gy = cp.y + Math.sin(ang)*26;
+      entities.push(makeNeutralGuard(gx, gy));
+    }
+  }
+
+  // 연못(호수) 생성 - 기지/광산 피해서 배치
+  ponds=[];
+  let pTries=0;
+  while(ponds.length<6 && pTries<400){
+    pTries++;
+    const x = Math.random()*WORLD_W, y = Math.random()*WORLD_H;
+    if(dist({x,y},{x:pBaseX,y:pBaseY})<260) continue;
+    if(dist({x,y},{x:eBaseX,y:eBaseY})<260) continue;
+    let bad=false;
+    for(const m of mines){ if(dist({x,y},m)<110){ bad=true; break; } }
+    for(const p of ponds){ if(dist({x,y},p)<260){ bad=true; break; } }
+    for(const c of controlPoints){ if(dist({x,y},c)<160){ bad=true; break; } }
+    if(bad) continue;
+    ponds.push({x,y,rx:50+Math.random()*70,ry:32+Math.random()*40,rot:Math.random()*3});
+  }
+
+  // 배경 소품(바위/나무/수풀/보급 상자) 생성 - 기지, 광산, 연못 근처는 피함
+  props=[];
+  let tries=0;
+  while(props.length<230 && tries<2200){
+    tries++;
+    const x = Math.random()*WORLD_W, y = Math.random()*WORLD_H;
+    if(dist({x,y},{x:pBaseX,y:pBaseY})<200) continue;
+    if(dist({x,y},{x:eBaseX,y:eBaseY})<200) continue;
+    let nearMine=false;
+    for(const m of mines){ if(dist({x,y},m)<80){ nearMine=true; break; } }
+    if(nearMine) continue;
+    let nearPond=false;
+    for(const p of ponds){ if(dist({x,y},p)<Math.max(p.rx,p.ry)+30){ nearPond=true; break; } }
+    if(nearPond) continue;
+    let nearCP=false;
+    for(const c of controlPoints){ if(dist({x,y},c)<c.radius+30){ nearCP=true; break; } }
+    if(nearCP) continue;
+    const r = Math.random();
+    const type = r<0.24?'rock':(r<0.46?'tree':(r<0.66?'grass':(r<0.76?'bush':(r<0.83?'crate':(r<0.89?'crater':(r<0.93?'wreckage':(r<0.97?'barbwire':'sandbag')))))));
+    props.push({x,y,type,size:8+Math.random()*14,seed:Math.random()});
+  }
+
+  // 서서히 흘러가는 구름 그림자
+  clouds=[];
+  for(let i=0;i<8;i++){
+    clouds.push({
+      x0: Math.random()*WORLD_W, y0: Math.random()*WORLD_H,
+      vx: (Math.random()*18-9), vy: (Math.random()*10-5),
+      size: 150+Math.random()*220,
+    });
+  }
+
+  // 미션별 추가 설정
+  rescueTargets = []; rescueStage = 0; rescueStageDefs = [];
+  escortId = null; escortWaypoints = []; escortWpIndex = 0; bossId = null;
+  courierId = null; courierDeadline = 0; courierDest = null;
+  const statMult = DIFFICULTY_SETTINGS[aiDifficulty].statMult;
+  if(missionMode==='rescue'){
+    rescueStageDefs = [
+      { name:'미라 요원',   ax:eBaseX-300, ay:eBaseY+520, abilityKey:'regen_mira',   abilityName:'지원군 합류', desc:'주변 아군이 초당 4씩 체력을 재생합니다' },
+      { name:'소피아 요원', ax:WORLD_W*0.5, ay:WORLD_H*0.42, abilityKey:'scout_sophia', abilityName:'전장의 눈',   desc:'주변 아군의 적 감지 범위가 40% 증가합니다' },
+      { name:'하늘 요원',   ax:pBaseX+700, ay:pBaseY-1400, abilityKey:'shield_haneul', abilityName:'구원의 손길', desc:'주변 아군이 받는 피해가 20% 감소합니다' },
+      { name:'유나 요원',   ax:eBaseX-1300, ay:eBaseY+260, abilityKey:'speed_yuna',   abilityName:'기동 지원',   desc:'주변 아군의 이동속도가 30% 증가합니다' },
+      { name:'리나 요원',   ax:WORLD_W*0.28, ay:WORLD_H*0.75, abilityKey:'haste_rina',   abilityName:'화력 증폭',   desc:'주변 아군의 공격 속도가 25% 빨라집니다' },
+    ];
+    spawnRescueStage(0);
+  } else if(missionMode==='escort'){
+    const convoy = makeUnit('worker','player', pBaseX+60, pBaseY-60);
+    convoy.hp=220; convoy.maxHp=220; convoy.dmg=0; convoy.radius=11; convoy.speed=46; convoy.name='보급 수송대';
+    entities.push(convoy);
+    escortId = convoy.id;
+    escortWaypoints = [
+      {x:pBaseX+420, y:pBaseY-620},
+      {x:WORLD_W*0.5, y:WORLD_H*0.5},
+      {x:eBaseX-520, y:eBaseY+520},
+      {x:eBaseX-160, y:eBaseY+160},
+    ];
+    escortWpIndex = 0;
+  } else if(missionMode==='boss'){
+    const boss = makeUnit('vehicle2','enemy', eBaseX-120, eBaseY+120);
+    boss.hp=1400*statMult; boss.maxHp=boss.hp; boss.dmg=42*statMult; boss.def=14;
+    boss.radius=27; boss.speed=34; boss.atkSpeed=1.3; boss.range=80;
+    boss.name=`${FACTIONS[enemyFactionKey].name} 최종병기`;
+    entities.push(boss);
+    bossId = boss.id;
+  } else if(missionMode==='courier'){
+    const courier = makeUnit('worker','player', pBaseX+40, pBaseY-40);
+    courier.hp=40; courier.maxHp=40; courier.dmg=0; courier.speed=110; courier.name='전령';
+    entities.push(courier);
+    courierId = courier.id;
+    courierDest = { x: WORLD_W*0.5+(Math.random()*300-150), y: WORLD_H*0.5+(Math.random()*300-150) };
+    courierDeadline = 100;
+  } else if(missionMode==='finalwar'){
+    // 최종 전쟁: 양측이 이미 전력을 어느 정도 갖춘 상태로 시작하는 대규모 전투
+    entities.push(makeBuilding('barracks','enemy',eBaseX-90,eBaseY+40,true));
+    entities.push(makeBuilding('factory','enemy',eBaseX+40,eBaseY-90,true));
+    aiBuiltBarracks=true; aiBuiltFactory=true;
+    for(let i=0;i<4;i++) entities.push(makeUnit('combat','enemy', eBaseX-150+(Math.random()*100-50), eBaseY+150+(Math.random()*100-50)));
+    for(let i=0;i<2;i++) entities.push(makeUnit('vehicle','enemy', eBaseX-220+(Math.random()*100-50), eBaseY+220+(Math.random()*100-50)));
+    entities.push(makeBuilding('barracks','player',pBaseX+90,pBaseY-40,true));
+    for(let i=0;i<3;i++) entities.push(makeUnit('combat','player', pBaseX+150+(Math.random()*100-50), pBaseY-150+(Math.random()*100-50)));
+  } else if(missionMode==='tutorial'){
+    tutorialStep = 0;
+    tutorialInitialWorkers = entities.filter(e=>e.team==='player'&&e.role==='worker'&&!e.dead).length;
+    const dummy = makeUnit('combat','enemy', pBaseX+320, pBaseY-260);
+    dummy.hp=40; dummy.maxHp=40; dummy.dmg=0; dummy.speed=0; dummy.name='훈련 인형';
+    entities.push(dummy);
+    tutorialDummyId = dummy.id;
+  }
+}
+
+// ---------- INPUT ----------
+function rawScreenPos(e){
+  const r = canvas.getBoundingClientRect();
+  return { x:(e.clientX-r.left)*(canvas.width/r.width), y:(e.clientY-r.top)*(canvas.height/r.height) };
+}
+function screenToWorld(e){ const p=rawScreenPos(e); return { x:p.x+camera.x, y:p.y+camera.y }; }
+
+canvas.addEventListener('mousedown', e=>{
+  canvas.focus();
+  const raw = rawScreenPos(e);
+  if(e.button===0 && isInMinimap(raw.x,raw.y)){ jumpCameraToMinimap(raw.x,raw.y); return; }
+  const p = { x:raw.x+camera.x, y:raw.y+camera.y };
+  if(e.button===0){
+    if(buildMode){ tryPlaceBuilding(p.x,p.y); return; }
+    if(attackMoveMode){ issueAttackMove(p); return; }
+    if(formationMode){ formationDragging=true; formationStart=p; return; }
+    dragStart=p; mouse.down=true;
+  }
+});
+canvas.addEventListener('mousemove', e=>{
+  const raw = rawScreenPos(e);
+  screenMouse = raw;
+  mouseOverCanvas = true;
+  mouse = { x:raw.x+camera.x, y:raw.y+camera.y, down:mouse.down };
+});
+canvas.addEventListener('mouseenter', ()=>{ mouseOverCanvas = true; });
+canvas.addEventListener('mouseleave', ()=>{ mouseOverCanvas = false; });
+window.addEventListener('mouseup', e=>{
+  if(e.button===0 && formationDragging){
+    const p = screenToWorld(e);
+    applyLineFormation(formationStart, p);
+    return;
+  }
+  if(e.button===0 && dragStart){
+    const p = screenToWorld(e);
+    finishSelect(dragStart,p,e.shiftKey);
+    dragStart=null; mouse.down=false;
+  }
+});
+canvas.addEventListener('contextmenu', e=>{
+  e.preventDefault();
+  const raw = rawScreenPos(e);
+  if(isInMinimap(raw.x,raw.y)) return;
+  if(buildMode){ buildMode=null; renderActions(); return; }
+  if(attackMoveMode){ attackMoveMode=false; canvas.style.cursor=''; return; }
+  if(formationMode){ formationMode=false; formationDragging=false; formationStart=null; canvas.style.cursor=''; return; }
+  issueRightClick(screenToWorld(e));
+});
+canvas.addEventListener('dblclick', e=>{
+  const raw = rawScreenPos(e);
+  if(isInMinimap(raw.x,raw.y)) return;
+  const p = { x:raw.x+camera.x, y:raw.y+camera.y };
+  let target=null, bestD=20;
+  for(const en of entities){
+    if(en.dead || en.kind!=='unit' || en.team!=='player') continue;
+    const d = dist(en,p);
+    if(d<bestD){ bestD=d; target=en; }
+  }
+  if(!target) return;
+  const sameKind = entities.filter(en=>
+    en.kind==='unit' && en.team==='player' && !en.dead && en.role===target.role &&
+    en.x>=camera.x && en.x<=camera.x+VIEW_W && en.y>=camera.y && en.y<=camera.y+VIEW_H
+  );
+  selection = sameKind.length ? sameKind : [target];
+  renderSelection(); renderActions(); renderSelectionBar();
+  log(`👥 화면에 보이는 ${selection[0].name} ${selection.length}기를 모두 선택했습니다.`,'player');
+});
+
+// ---------- TOUCH (mobile) ----------
+// 짧은 탭 = 선택, 드래그 = 범위 선택, 길게 누르기(롱프레스) = 이동/공격/채집(우클릭 대응)
+let touchLongPressTimer=null, touchMoved=false;
+const LONG_PRESS_MS=420, TOUCH_MOVE_THRESH=14;
+
+function rawTouchPos(e){
+  const t = e.touches[0] || e.changedTouches[0];
+  const r = canvas.getBoundingClientRect();
+  return { x:(t.clientX-r.left)*(canvas.width/r.width), y:(t.clientY-r.top)*(canvas.height/r.height) };
+}
+function touchToWorld(e){ const p=rawTouchPos(e); return { x:p.x+camera.x, y:p.y+camera.y }; }
+
+canvas.addEventListener('touchstart', e=>{
+  e.preventDefault();
+  isTouchDevice = true;
+  if(e.touches.length>=2){
+    clearTimeout(touchLongPressTimer); dragStart=null; mouse.down=false;
+    const t1=e.touches[0], t2=e.touches[1];
+    twoFingerPan = { x:(t1.clientX+t2.clientX)/2, y:(t1.clientY+t2.clientY)/2, camX:camera.x, camY:camera.y };
+    return;
+  }
+  const raw = rawTouchPos(e);
+  if(isInMinimap(raw.x,raw.y)){ jumpCameraToMinimap(raw.x,raw.y); return; }
+  const p = { x:raw.x+camera.x, y:raw.y+camera.y };
+  if(buildMode){ tryPlaceBuilding(p.x,p.y); return; }
+  if(attackMoveMode){ issueAttackMove(p); return; }
+  if(formationMode){ formationDragging=true; formationStart=p; mouse={x:p.x,y:p.y,down:true}; return; }
+  dragStart = p; mouse = {x:p.x,y:p.y,down:true}; touchMoved=false;
+  clearTimeout(touchLongPressTimer);
+  touchLongPressTimer = setTimeout(()=>{
+    if(!touchMoved && dragStart){
+      issueRightClick(dragStart);
+      if(navigator.vibrate) navigator.vibrate(25);
+      dragStart=null; mouse.down=false;
+    }
+  }, LONG_PRESS_MS);
+}, {passive:false});
+
+canvas.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  if(e.touches.length>=2 && twoFingerPan){
+    const t1=e.touches[0], t2=e.touches[1];
+    const mx=(t1.clientX+t2.clientX)/2, my=(t1.clientY+t2.clientY)/2;
+    const r = canvas.getBoundingClientRect();
+    const scaleX = canvas.width/r.width, scaleY = canvas.height/r.height;
+    camera.x = twoFingerPan.camX - (mx-twoFingerPan.x)*scaleX;
+    camera.y = twoFingerPan.camY - (my-twoFingerPan.y)*scaleY;
+    clampCamera();
+    return;
+  }
+  const p = touchToWorld(e);
+  mouse = {x:p.x,y:p.y,down:true};
+  if(dragStart && dist(p,dragStart) > TOUCH_MOVE_THRESH){
+    touchMoved = true;
+    clearTimeout(touchLongPressTimer);
+  }
+}, {passive:false});
+
+canvas.addEventListener('touchend', e=>{
+  e.preventDefault();
+  if(e.touches.length<2) twoFingerPan=null;
+  clearTimeout(touchLongPressTimer);
+  if(formationDragging){
+    applyLineFormation(formationStart, mouse);
+    return;
+  }
+  if(dragStart){
+    if(touchMoved) finishSelect(dragStart, mouse, false);
+    else finishSelect(dragStart, dragStart, false);
+  }
+  dragStart=null; mouse.down=false;
+}, {passive:false});
+
+function finishSelect(a,b,add){
+  const x1=Math.min(a.x,b.x),x2=Math.max(a.x,b.x),y1=Math.min(a.y,b.y),y2=Math.max(a.y,b.y);
+  const isClick = (x2-x1)<4 && (y2-y1)<4;
+  let picked=[];
+  if(isClick){
+    let best=null,bestD=18;
+    for(const en of entities){
+      if(en.team!=='player'||en.dead) continue;
+      const d=dist(en,{x:a.x,y:a.y});
+      if(d<(en.radius+10) && d<bestD){ best=en; bestD=d; }
+    }
+    if(best) picked=[best];
+  } else {
+    picked = entities.filter(en=>en.kind==='unit'&&en.team==='player'&&!en.dead&&en.x>=x1&&en.x<=x2&&en.y>=y1&&en.y<=y2);
+    if(picked.length===0){
+      picked = entities.filter(en=>en.kind==='building'&&en.team==='player'&&!en.dead&&en.x>=x1&&en.x<=x2&&en.y>=y1&&en.y<=y2).slice(0,1);
+    }
+  }
+  if(add) selection=[...new Set([...selection,...picked])];
+  else selection=picked;
+  renderSelection(); renderActions(); renderSelectionBar();
+}
+
+function issueAttackMove(p){
+  const myUnits = selection.filter(s=>s.kind==='unit' && s.team==='player');
+  attackMoveMode = false;
+  canvas.style.cursor='';
+  if(myUnits.length===0) return;
+  for(const u of myUnits){
+    u.attackTarget=null; u.moveTarget=null; u.gatherState=null; u.repairTarget=null;
+    u.attackMoveDest = {x:p.x, y:p.y};
+  }
+  castRings.push({x:p.x,y:p.y,start:elapsed,color:'#ff5555'});
+  log(`⚔ ${myUnits.length}개 유닛에게 공격 이동 명령 (도중에 적과 마주치면 자동 교전)`,'player');
+}
+function applyLineFormation(p1, p2){
+  const units = selection.filter(s=>s.kind==='unit' && s.team==='player');
+  formationMode = false; formationDragging = false; formationStart = null;
+  canvas.style.cursor='';
+  if(units.length===0) return;
+  const n = units.length;
+  for(let i=0;i<n;i++){
+    const t = n>1 ? i/(n-1) : 0.5;
+    const x = p1.x + (p2.x-p1.x)*t;
+    const y = p1.y + (p2.y-p1.y)*t;
+    const u = units[i];
+    u.attackTarget=null; u.gatherState=null; u.repairTarget=null; u.attackMoveDest=null;
+    u.moveTarget = {x, y};
+  }
+  log(`📐 ${n}개 유닛을 일렬 대형으로 재배치했습니다.`,'player');
+}
+function issueRightClick(p){
+  if(selection.length===0) return;
+  let target=null;
+  for(const en of entities){ if(en.dead) continue; if(dist(en,p)<en.radius+10){ target=en; break; } }
+  let mine=null;
+  for(const m of mines){ if(Math.hypot(m.x-p.x,m.y-p.y)<22 && m.amount>0){ mine=m; break; } }
+  const myUnits = selection.filter(s=>s.kind==='unit'&&s.team==='player');
+  if(myUnits.length===0){
+    // 건물만 선택된 상태에서 우클릭 -> 생산 유닛이 자동으로 향할 집결지(랠리 포인트) 지정
+    if(selection.length===1){
+      const b = selection[0];
+      if(b.kind==='building' && b.team==='player' && BUILDING_BASE[b.type] && BUILDING_BASE[b.type].trains && BUILDING_BASE[b.type].trains.length){
+        b.rallyX = p.x; b.rallyY = p.y;
+        log('🚩 집결지를 지정했습니다. 생산된 유닛이 자동으로 이동합니다.','player');
+      }
+    }
+    return;
+  }
+
+  if(target && target.team==='enemy'){
+    for(const u of myUnits){ if(u.attackTarget!==target) u.freshEngage=true; u.attackTarget=target; u.moveTarget=null; u.gatherState=null; u.repairTarget=null; }
+    log(`▶ ${myUnits.length}개 유닛에게 공격 명령`,'player');
+  } else if(target && target.kind==='building' && target.team==='player' && target.hp<target.maxHp){
+    const workers = myUnits.filter(u=>u.role==='worker');
+    const others = myUnits.filter(u=>u.role!=='worker');
+    for(const u of workers){ u.repairTarget=target; u.moveTarget={x:target.x,y:target.y}; u.attackTarget=null; u.gatherState=null; }
+    for(const u of others){ u.moveTarget={x:target.x,y:target.y}; u.attackTarget=null; u.gatherState=null; u.repairTarget=null; }
+    if(workers.length) log(`🔧 공병 ${workers.length}기에게 수리 명령`,'player');
+  } else if(mine){
+    const workers = myUnits.filter(u=>u.role==='worker');
+    for(const u of workers){ u.gatherState='toMine'; u.mineTarget=mine; u.moveTarget={x:mine.x,y:mine.y}; u.attackTarget=null; u.repairTarget=null; }
+  } else {
+    for(const u of myUnits){ u.moveTarget={x:p.x+(Math.random()*16-8),y:p.y+(Math.random()*16-8)}; u.attackTarget=null; u.gatherState=null; u.repairTarget=null; }
+  }
+}
+
+// ---------- BUILD / TRAIN ----------
+function tryPlaceBuilding(x,y){
+  const type = buildMode;
+  const def = BUILDING_BASE[type];
+  if(!def) return;
+  if(teams.player.gold < def.cost){ log('골드가 부족합니다.'); return; }
+  for(const en of entities){ if(!en.dead && dist(en,{x,y})<en.radius+40){ log('공간이 부족합니다.'); return; } }
+  let linkedMine = null;
+  if(def.isAutoMiner){
+    linkedMine = mines.find(m=>m.amount>0 && !m.claimedBy && dist(m,{x,y})<def.mineRange);
+    if(!linkedMine){ log('자동 채굴기는 아직 점유되지 않은 광산 근처에만 지을 수 있습니다.'); return; }
+  }
+  teams.player.gold -= def.cost;
+  const b = makeBuilding(type,'player',x,y,false);
+  if(linkedMine){ b.mineTarget = linkedMine; linkedMine.claimedBy = b.id; }
+  entities.push(b);
+  log(`${def.name} 건설 시작`,'player');
+  buildMode=null; renderActions();
+}
+function trainUnit(building, role){
+  const fKey = building.team==='player'?playerFactionKey:enemyFactionKey;
+  const def = FACTIONS[fKey][role];
+  const team = teams[building.team];
+  if(building.queue.length>=5) return;
+  const popCost = POP_COST[role]||0;
+  if(popCost>0 && popUsed(building.team)+popCost > popCap(building.team)){
+    if(building.team==='player') log('🚫 인구수가 부족합니다! 서플라이 디포를 건설하세요. (단축키 U)');
+    return;
+  }
+  if(team.gold < def.cost){ if(building.team==='player') log('골드가 부족합니다.'); return; }
+  team.gold -= def.cost;
+  building.queue.push({role, t:0, total:def.buildTime});
+  if(building.team==='player') renderActions();
+}
+
+const DEPLOY_COST = 100, DEPLOY_COOLDOWN = 45, DEPLOY_COUNT = 12;
+function deployTroops(vehicle){
+  const fKey = vehicle.team==='player'?playerFactionKey:enemyFactionKey;
+  if(!FACTIONS[fKey].mechInfantry) return; // 한국 기계화보병 수송차 전용
+  if(elapsed < (vehicle.deployReady||0)) return;
+  const team = teams[vehicle.team];
+  if(team.gold < DEPLOY_COST){ if(vehicle.team==='player') log('골드가 부족합니다.'); return; }
+  team.gold -= DEPLOY_COST;
+  vehicle.deployReady = elapsed + DEPLOY_COOLDOWN;
+  for(let i=0;i<DEPLOY_COUNT;i++){
+    const ang = (Math.PI*2/DEPLOY_COUNT)*i;
+    const r = vehicle.radius + 26;
+    const nu = makeUnit('mechInfantry', vehicle.team, vehicle.x+Math.cos(ang)*r, vehicle.y+Math.sin(ang)*r);
+    entities.push(nu);
+  }
+  if(vehicle.team==='player'){ log(`🪖 기계화보병 ${DEPLOY_COUNT}명을 전개했습니다!`,'player'); renderActions(); }
+}
+
+// ---------- HERO AURA (항상 유지되는 패시브) ----------
+// 영웅 주변 아군은 nearbyHero()를 통해 매 프레임 자동으로 버프를 받습니다.
+// 버튼을 눌러 발동하는 방식이 아니라, 영웅이 살아서 근처에 있는 동안 계속 유지됩니다.
+
+// ---------- CONTROL POINTS (점령전 요소) ----------
+function updateControlPoints(dt){
+  for(const cp of controlPoints){
+    let pCount=0, eCount=0, neutralAlive=false;
+    for(const en of entities){
+      if(en.dead || en.kind!=='unit') continue;
+      if(dist(en,cp) <= cp.radius){
+        if(en.team==='player') pCount++;
+        else if(en.team==='enemy') eCount++;
+        else if(en.team==='neutral') neutralAlive=true;
+      }
+    }
+    let capturingTeam=null;
+    if(!neutralAlive){
+      if(pCount>0 && eCount===0) capturingTeam='player';
+      else if(eCount>0 && pCount===0) capturingTeam='enemy';
+    }
+
+    if(capturingTeam){
+      if(cp._lastCapturingTeam!==capturingTeam){ cp.progress=0; cp._lastCapturingTeam=capturingTeam; }
+      if(cp.owner!==capturingTeam){
+        cp.progress += CONTROL_CAPTURE_RATE*dt;
+        if(cp.progress>=100){
+          cp.owner=capturingTeam; cp.progress=100; cp._lastCapturingTeam=null;
+          particles.push({x:cp.x,y:cp.y-30,life:1,txt:'CAPTURED',color:factionAccentForTeam(capturingTeam)});
+          log(capturingTeam==='player' ? '🚩 점령 지점을 점령했습니다! (골드 수급 시작)' : '🚩 적이 점령 지점을 빼앗았습니다!', capturingTeam);
+        }
+      }
+    } else {
+      cp._lastCapturingTeam=null;
+      if(cp.owner===null && cp.progress>0){ cp.progress=Math.max(0,cp.progress-CONTROL_DECAY_RATE*dt); }
+    }
+  }
+  for(const cp of controlPoints){
+    if(cp.owner) teams[cp.owner].gold += CONTROL_GOLD_RATE*dt;
+  }
+}
+
+// ---------- AI ----------
+function aiParam(key){
+  let v = DIFFICULTY_SETTINGS[aiDifficulty][key];
+  if(missionMode==='defense'){
+    if(key==='interval') v *= 0.6;
+    if(key==='armyThreshold') v = Math.max(2, v-2);
+  }
+  return v;
+}
+let aiTimer=0, aiBuiltBarracks=false, aiBuiltFactory=false, aiBuiltAirbase=false;
+function updateAI(dt){
+  aiTimer += dt;
+  const enemyUnits = entities.filter(e=>e.team==='enemy'&&e.kind==='unit'&&!e.dead);
+  const enemyWorkers = enemyUnits.filter(u=>u.role==='worker');
+  const enemyHQ = entities.find(e=>e.team==='enemy'&&e.type==='hq'&&!e.dead);
+  const enemyBarracks = entities.filter(e=>e.team==='enemy'&&e.type==='barracks'&&!e.dead);
+  const enemyFactory = entities.filter(e=>e.team==='enemy'&&e.type==='factory'&&!e.dead);
+  const enemyAirbase = entities.filter(e=>e.team==='enemy'&&e.type==='airbase'&&!e.dead);
+  const enemyHero = entities.find(e=>e.team==='enemy'&&e.isHero&&!e.dead);
+
+  for(const w of enemyWorkers){
+    if(!w.gatherState && !w.moveTarget){
+      const eFallback = {x:WORLD_W-180,y:180};
+      const freeMine = mines.filter(m=>m.amount>0).sort((a,b)=>dist(a,enemyHQ||eFallback)-dist(b,enemyHQ||eFallback))[0];
+      if(freeMine){ w.gatherState='toMine'; w.mineTarget=freeMine; w.moveTarget={x:freeMine.x,y:freeMine.y}; }
+    }
+  }
+
+  if(aiTimer<aiParam('interval')) return;
+  aiTimer=0;
+
+  if(enemyHQ && enemyWorkers.length<DIFFICULTY_SETTINGS[aiDifficulty].workerCap && teams.enemy.gold>=FACTIONS[enemyFactionKey].worker.cost){
+    trainUnit(enemyHQ,'worker');
+  }
+  if(!aiBuiltBarracks && teams.enemy.gold>=150){
+    const bx=enemyHQ.x-90, by=enemyHQ.y+40;
+    let blocked=false;
+    for(const en of entities){ if(!en.dead && dist(en,{x:bx,y:by})<en.radius+40) blocked=true; }
+    if(!blocked){
+      teams.enemy.gold -= BUILDING_BASE.barracks.cost;
+      entities.push(makeBuilding('barracks','enemy',bx,by,false));
+      aiBuiltBarracks=true;
+      log('적이 병영을 건설했습니다.','enemy');
+    }
+  }
+  if(aiBuiltBarracks && !aiBuiltFactory && teams.enemy.gold>=BUILDING_BASE.factory.cost+50){
+    const fx=enemyHQ.x+40, fy=enemyHQ.y-90;
+    let blocked=false;
+    for(const en of entities){ if(!en.dead && dist(en,{x:fx,y:fy})<en.radius+40) blocked=true; }
+    if(!blocked){
+      teams.enemy.gold -= BUILDING_BASE.factory.cost;
+      entities.push(makeBuilding('factory','enemy',fx,fy,false));
+      aiBuiltFactory=true;
+      log('적이 팩토리를 건설했습니다.','enemy');
+    }
+  }
+  if(aiBuiltFactory && !aiBuiltAirbase && teams.enemy.gold>=BUILDING_BASE.airbase.cost+60){
+    const ax=enemyHQ.x-40, ay=enemyHQ.y-100;
+    let blocked=false;
+    for(const en of entities){ if(!en.dead && dist(en,{x:ax,y:ay})<en.radius+40) blocked=true; }
+    if(!blocked){
+      teams.enemy.gold -= BUILDING_BASE.airbase.cost;
+      entities.push(makeBuilding('airbase','enemy',ax,ay,false));
+      aiBuiltAirbase=true;
+      log('적이 항공기지를 건설했습니다.','enemy');
+    }
+  }
+  if(popCap('enemy') - popUsed('enemy') <= 3 && teams.enemy.gold>=BUILDING_BASE.supply.cost){
+    const sx=enemyHQ.x+(Math.random()*160-80), sy=enemyHQ.y+(Math.random()*160-80);
+    let blocked=false;
+    for(const en of entities){ if(!en.dead && dist(en,{x:sx,y:sy})<en.radius+40) blocked=true; }
+    if(!blocked){
+      teams.enemy.gold -= BUILDING_BASE.supply.cost;
+      entities.push(makeBuilding('supply','enemy',sx,sy,false));
+    }
+  }
+  for(const b of enemyBarracks){
+    const pick = Math.random()<0.7 ? 'combat' : 'shield';
+    if(teams.enemy.gold >= FACTIONS[enemyFactionKey][pick].cost && Math.random()<0.85){
+      trainUnit(b,pick);
+    }
+  }
+  for(const b of enemyFactory){
+    const roll = Math.random();
+    const pick = roll<0.34 ? 'vehicle' : (roll<0.67 ? 'vehicle2' : 'vehicle3');
+    if(teams.enemy.gold >= FACTIONS[enemyFactionKey][pick].cost && Math.random()<0.7){
+      trainUnit(b,pick);
+    }
+  }
+  if(enemyFactionKey==='korea'){
+    const enemyTransports = entities.filter(e=>e.team==='enemy'&&e.role==='vehicle3'&&!e.dead);
+    for(const t of enemyTransports){
+      if(teams.enemy.gold >= DEPLOY_COST*1.5 && Math.random()<0.3) deployTroops(t);
+    }
+  }
+  for(const b of enemyAirbase){
+    if(teams.enemy.gold >= FACTIONS[enemyFactionKey].air.cost && Math.random()<0.55){
+      trainUnit(b,'air');
+    }
+  }
+  const army = enemyUnits.filter(u=>u.role!=='worker'&&!u.isHero);
+  if(army.length>=aiParam('armyThreshold')){
+    const playerHQ = entities.find(e=>e.team==='player'&&e.type==='hq'&&!e.dead);
+    if(playerHQ){
+      const squad = [...army];
+      if(enemyHero) squad.push(enemyHero);
+      for(const u of squad){
+        u.attackTarget=null; u.moveTarget=null; u.gatherState=null;
+        u.attackMoveDest = {x:playerHQ.x, y:playerHQ.y}; // 이동 중 마주치는 적과 자동 교전(auto-aggro)하며 전진
+      }
+      log('⚠ 적 부대가 공격해옵니다!','enemy');
+    }
+  }
+}
+
+// ---------- UPDATE ----------
+function auraRadiusFor(team){ return HERO_AURA_RADIUS * ((team==='player' && hasResearch('energy')) ? 1.2 : 1); }
+let aliveHeroesByTeam = {player:[], enemy:[]};
+function refreshHeroCache(){
+  aliveHeroesByTeam.player.length = 0;
+  aliveHeroesByTeam.enemy.length = 0;
+  for(const en of entities){
+    if(en.dead || !en.isHero) continue;
+    const list = aliveHeroesByTeam[en.team];
+    if(list) list.push(en);
+  }
+}
+function nearbyHero(u){
+  // 살아있는 아군 영웅이 반경 내에 있으면 그 영웅을 반환 (오라 링 표시 등 공통 연출용)
+  const list = aliveHeroesByTeam[u.team];
+  if(!list || list.length===0) return null;
+  const r = auraRadiusFor(u.team);
+  for(const en of list){
+    if(dist(u,en) <= r) return en;
+  }
+  return null;
+}
+function nearbyHeroWithAbility(u, abilityKey){
+  const list = aliveHeroesByTeam[u.team];
+  if(!list || list.length===0) return null;
+  const r = auraRadiusFor(u.team);
+  for(const en of list){
+    if(en.ability!==abilityKey) continue;
+    if(dist(u,en) <= r) return en;
+  }
+  return null;
+}
+// 영웅 6명은 서로 겹치지 않는 고유 효과를 가짐:
+//  한국 사령관(aura_korea)     : 사거리 강화
+//  일본 닌자대장(stealth_japan): 은신
+//  미국 포격사령관(barrage_usa): 공격력 강화
+//  미라 요원(regen_mira)       : 체력 재생
+//  소피아 요원(scout_sophia)   : 적 감지범위 강화
+//  하늘 요원(shield_haneul)    : 피해 감소
+const ESCORT_NEED_RADIUS = 90;
+function hasNearbyEscort(u){
+  for(const en of entities){
+    if(en.dead || en.kind!=='unit' || en.team!==u.team || en===u) continue;
+    if(dist(u,en) <= ESCORT_NEED_RADIUS) return true;
+  }
+  return false;
+}
+function effSpeed(u){
+  if(u._needsEscort && !hasNearbyEscort(u)) return 0;
+  let mult = 1;
+  if(nearbyHeroWithAbility(u,'speed_yuna')) mult *= 1.3;
+  if(nearbyHeroWithAbility(u,'aura_korea')) mult *= 2.0; // 사령관: 이동속도 +100%
+  return u.speed * mult;
+}
+function effDmg(u){ const h=nearbyHeroWithAbility(u,'barrage_usa'); return u.dmg * (h?1.3:1); }
+function effRange(u){ const h=nearbyHeroWithAbility(u,'aura_korea'); return u.range * (h?1.3:1); }
+function isStealthed(u){ return !!nearbyHeroWithAbility(u,'stealth_japan'); }
+function aggroRangeMultFor(u){ return nearbyHeroWithAbility(u,'scout_sophia') ? 1.4 : 1; }
+function damageReductionFor(u){ return nearbyHeroWithAbility(u,'shield_haneul') ? 0.8 : 1; }
+function atkSpeedMultFor(u){ return nearbyHeroWithAbility(u,'haste_rina') ? 0.75 : 1; }
+
+function updateUnit(u, dt){
+  if(u.dead) return;
+  u._isMoving = false;
+  if(u.hp < u.maxHp && nearbyHeroWithAbility(u,'regen_mira')){
+    u.hp = Math.min(u.maxHp, u.hp + 4*dt);
+  }
+  if(u.repairTarget){
+    if(u.repairTarget.dead || u.repairTarget.hp>=u.repairTarget.maxHp){
+      u.repairTarget=null;
+    } else {
+      const d = dist(u,u.repairTarget);
+      if(d > u.repairTarget.radius+14){
+        moveToward(u,u.repairTarget,dt);
+      } else {
+        u.moveTarget=null;
+        const team = teams[u.team];
+        const healAmount = Math.min(REPAIR_RATE*dt, u.repairTarget.maxHp-u.repairTarget.hp);
+        const cost = healAmount*REPAIR_GOLD_PER_HP;
+        if(team.gold >= cost && healAmount>0){
+          team.gold -= cost;
+          u.repairTarget.hp += healAmount;
+        }
+      }
+      return;
+    }
+  }
+  if(u.gatherState==='toMine'){
+    if(!u.moveTarget){ u.moveTarget={x:u.mineTarget.x+(Math.random()*20-10), y:u.mineTarget.y+(Math.random()*20-10)}; }
+    if(dist(u,u.mineTarget)<26){ u.moveTarget=null; u.gatherState='mining'; u.gatherT=0; }
+  } else if(u.gatherState==='mining'){
+    u.gatherT=(u.gatherT||0)+dt;
+    if(u.gatherT>=GATHER_TIME){
+      const take=Math.min(GATHER_AMOUNT,u.mineTarget.amount);
+      u.mineTarget.amount -= take; u.carrying=take; u.gatherState='toBase';
+      const candidates = entities.filter(e=>e.team===u.team && e.kind==='building' && !e.dead &&
+        e.buildProgress>=1 && BUILDING_BASE[e.type].isDropoff);
+      let base=null, bestD=Infinity;
+      for(const c of candidates){ const d=dist(u,c); if(d<bestD){ bestD=d; base=c; } }
+      u.dropoff=base;
+      u.moveTarget = base ? {x:base.x+(Math.random()*30-15), y:base.y+(Math.random()*30-15)} : null;
+    }
+  } else if(u.gatherState==='toBase'){
+    if(u.dropoff && dist(u,u.dropoff) < u.dropoff.radius+14){
+      teams[u.team].gold += u.carrying; u.carrying=0;
+      if(u.mineTarget.amount>0){ u.gatherState='toMine'; u.moveTarget={x:u.mineTarget.x+(Math.random()*20-10),y:u.mineTarget.y+(Math.random()*20-10)}; }
+      else { u.gatherState=null; u.mineTarget=null; }
+    }
+  }
+
+  if(u.attackTarget){
+    if(u.attackTarget.dead){ u.attackTarget=null; }
+    else {
+      const d = dist(u,u.attackTarget);
+      const rng = effRange(u);
+      if(d > rng + u.attackTarget.radius){
+        moveToward(u,u.attackTarget,dt);
+      } else {
+        u.moveTarget=null;
+        u.atkCooldown -= dt;
+        if(u.atkCooldown<=0){ u.atkCooldown=u.atkSpeed*atkSpeedMultFor(u); spawnProjectile(u,u.attackTarget); dealDamage(u,u.attackTarget); }
+      }
+      return;
+    }
+  } else if(u.role!=='worker'){
+    let closest=null, cd=AGGRO_RANGE*(hasResearch('radar')&&u.team==='player'?1.2:1)*aggroRangeMultFor(u);
+    for(const en of entities){
+      if(en.dead||en.team===u.team) continue;
+      if(isStealthed(en)){ const dd=dist(u,en); if(dd>40) continue; }
+      if(en.rescueGrace && elapsed < en.rescueGrace) continue;
+      const d=dist(u,en);
+      if(d<cd){ cd=d; closest=en; }
+    }
+    if(closest && !u.moveTarget && !u.gatherState){ u.attackTarget=closest; u.freshEngage=true; return; }
+  }
+
+  if(u.attackMoveDest && !u.moveTarget && !u.attackTarget && !u.gatherState){
+    const dd = dist(u,u.attackMoveDest);
+    if(dd < 30){ u.attackMoveDest=null; }
+    else { u.moveTarget = {x:u.attackMoveDest.x, y:u.attackMoveDest.y}; }
+  }
+
+  if(u.moveTarget){
+    const d = dist(u,u.moveTarget);
+    if(d<4){ if(u.gatherState!=='toMine' && u.gatherState!=='toBase') u.moveTarget=null; }
+    else moveToward(u,u.moveTarget,dt);
+  }
+}
+
+function moveToward(u,target,dt){
+  const d = dist(u,target);
+  if(d<1) return;
+  const sp = effSpeed(u);
+  const vx=(target.x-u.x)/d, vy=(target.y-u.y)/d;
+  u.x += vx*sp*dt; u.y += vy*sp*dt;
+  u.x = Math.max(12,Math.min(WORLD_W-12,u.x));
+  u.y = Math.max(12,Math.min(WORLD_H-12,u.y));
+  u._isMoving = true;
+  u._legPhase = (u._legPhase||0) + dt*9;
+  u._facing = vx < 0 ? -1 : 1;
+  if(u.kind==='unit' && skinEffectLevelForUnit(u)>=1){
+    u._trailTimer = (u._trailTimer||0) + dt;
+    if(u._trailTimer > 0.06){
+      u._trailTimer = 0;
+      u._trail = u._trail || [];
+      u._trail.push({x:u.x, y:u.y, t:elapsed});
+      if(u._trail.length > 7) u._trail.shift();
+    }
+  }
+}
+
+function projectileKindFor(attacker){
+  if((attacker.range||0) <= 35) return 'melee';
+  if(attacker.role==='air') return attacker.faction==='korea' ? 'rocket' : (attacker.faction==='usa' ? 'shell' : 'bullet');
+  if(attacker.role==='vehicle2' && attacker.faction==='korea') return 'rocket';
+  if(attacker.faction==='usa') return 'shell';
+  return 'bullet';
+}
+function spawnProjectile(attacker, target){
+  const kind = projectileKindFor(attacker);
+  const col = colorFor(attacker);
+  if(kind==='melee'){
+    projectiles.push({kind, x:target.x, y:target.y, t:0, dur:0.18, angle:Math.random()*6.28, color:col});
+  } else {
+    const dur = kind==='bullet' ? 0.13 : kind==='shell' ? 0.24 : 0.4; // rocket
+    projectiles.push({kind, x0:attacker.x, y0:attacker.y-8, x1:target.x, y1:target.y, t:0, dur, color:col});
+  }
+}
+function findProtector(target){
+  // target 근처에 살아있는 아군 방패병이 있으면 그 방패병이 피해를 대신 받는다 (자기 자신/건물 제외)
+  if(target.kind!=='unit' || target.role==='shield') return null;
+  let best=null, bd=SHIELD_PROTECT_RADIUS;
+  for(const en of entities){
+    if(en.dead || en.kind!=='unit' || en.role!=='shield' || en.team!==target.team) continue;
+    const d = dist(target,en);
+    if(d<bd){ bd=d; best=en; }
+  }
+  return best;
+}
+function dealDamage(attacker, target){
+  lastCombatTime = elapsed;
+  if(devMode && devGodMode && target.team==='player') return;
+  if(target._captive) return; // 포로로 잡혀있는 동안은 무적
+  const protector = findProtector(target);
+  const actualTarget = protector || target;
+  let dmg = effDmg(attacker) - (actualTarget.def||0)*0.5;
+  if(attacker.firstStrike && attacker.freshEngage){ dmg *= 2; attacker.freshEngage=false; }
+  dmg *= damageReductionFor(actualTarget);
+  dmg = Math.max(2, Math.round(dmg));
+  actualTarget.hp -= dmg;
+  actualTarget.lastHit = elapsed;
+  if(protector){
+    particles.push({x:target.x,y:target.y-14,life:0.5,txt:'방어!',color:colorFor(protector)});
+  }
+  particles.push({x:actualTarget.x,y:actualTarget.y-10,life:0.3,txt:'-'+dmg,color:colorFor(attacker)});
+  if(actualTarget.hp<=0 && !actualTarget.dead){
+    actualTarget.dead=true;
+    if(attacker.team==='player') killScore++;
+    if(actualTarget.kind==='building' && actualTarget.type==='hq') onHQDestroyed(actualTarget.team);
+    if(actualTarget.kind==='building' && BUILDING_BASE[actualTarget.type] && BUILDING_BASE[actualTarget.type].isAutoMiner && actualTarget.mineTarget){
+      actualTarget.mineTarget.claimedBy = null;
+    }
+  }
+}
+
+function updateBuilding(b,dt){
+  if(b.dead) return;
+  if(b.buildProgress<1){
+    b.buildProgress += dt/b.buildTime;
+    b.hp = b.maxHp*Math.max(0.15,b.buildProgress);
+    if(b.buildProgress>=1){ b.buildProgress=1; b.hp=b.maxHp; if(b.team==='player') log(`${BUILDING_BASE[b.type].name} 건설 완료`,'player'); }
+    return;
+  }
+  if(BUILDING_BASE[b.type].isAutoMiner){
+    if(b.mineTarget && b.mineTarget.amount>0){
+      b._mineAccum = (b._mineAccum||0) + BUILDING_BASE[b.type].mineRate*dt;
+      if(b._mineAccum>=1){
+        const take = Math.min(Math.floor(b._mineAccum), b.mineTarget.amount);
+        b.mineTarget.amount -= take;
+        teams[b.team].gold += take;
+        b._mineAccum -= take;
+      }
+    } else if(b.mineTarget && b.mineTarget.amount<=0 && !b._depletedLogged){
+      b._depletedLogged = true;
+      if(b.team==='player') log('자동 채굴기의 광산이 고갈되었습니다.','player');
+    }
+  }
+  if(b.range>0){
+    // 방어 타워: 사거리 내 적을 자동 탐지/공격
+    if(b.attackTarget){
+      if(b.attackTarget.dead){ b.attackTarget=null; }
+      else {
+        const d = dist(b,b.attackTarget);
+        if(d > b.range + b.attackTarget.radius){ b.attackTarget=null; }
+        else {
+          b.atkCooldown -= dt;
+          if(b.atkCooldown<=0){ b.atkCooldown=b.atkSpeed; spawnProjectile(b,b.attackTarget); dealDamage(b,b.attackTarget); }
+        }
+      }
+    }
+    if(!b.attackTarget){
+      let closest=null, cd=b.range;
+      for(const en of entities){
+        if(en.dead||en.team===b.team) continue;
+        if(isStealthed(en)){ const dd=dist(b,en); if(dd>40) continue; }
+        if(en.rescueGrace && elapsed < en.rescueGrace) continue;
+        const d=dist(b,en);
+        if(d<cd){ cd=d; closest=en; }
+      }
+      if(closest) b.attackTarget=closest;
+    }
+  }
+  if(b.queue.length>0){
+    const item=b.queue[0]; item.t+=dt;
+    if(item.t>=item.total){
+      b.queue.shift();
+      const spawnX=b.x+(Math.random()*50-25), spawnY=b.y+b.radius+20;
+      const nu = makeUnit(item.role,b.team,spawnX,spawnY);
+      nu.moveTarget={x:b.rallyX,y:b.rallyY};
+      entities.push(nu);
+      if(b.team==='player'){ log(`${nu.name} 생산 완료`,'player'); }
+    }
+  }
+}
+
+function onHQDestroyed(team){
+  if(gameOver) return;
+  gameOver=true;
+  const overlay=document.getElementById('overlay');
+  const title=document.getElementById('overlayTitle');
+  const reward=document.getElementById('rewardLine');
+  overlay.style.display='flex';
+  let pts;
+  if(team==='player'){ title.textContent='DEFEAT'; title.style.color='var(--enemy)'; pts = 20+killScore*2; }
+  else { title.textContent='VICTORY'; title.style.color='var(--player)'; pts = 100+killScore*3; }
+  metaPoints += pts;
+  reward.textContent = `획득 포인트: +${pts} P  (처치 ${killScore}) — 총 ${metaPoints} P`;
+}
+function triggerSurvivalVictory(){
+  if(gameOver) return;
+  gameOver=true;
+  const overlay=document.getElementById('overlay');
+  const title=document.getElementById('overlayTitle');
+  const reward=document.getElementById('rewardLine');
+  overlay.style.display='flex';
+  title.textContent='VICTORY'; title.style.color='var(--player)';
+  const pts = 120+killScore*3;
+  metaPoints += pts;
+  reward.textContent = `방어 성공! 획득 포인트: +${pts} P (처치 ${killScore}) — 총 ${metaPoints} P`;
+  log('🛡 제한 시간 동안 기지를 지켜냈습니다! 승리!','player');
+}
+function triggerMissionVictory(msg, bonus){
+  if(gameOver) return;
+  gameOver=true;
+  const overlay=document.getElementById('overlay');
+  const title=document.getElementById('overlayTitle');
+  const reward=document.getElementById('rewardLine');
+  overlay.style.display='flex';
+  title.textContent='VICTORY'; title.style.color='var(--player)';
+  const pts = (bonus||120)+killScore*3;
+  metaPoints += pts;
+  reward.textContent = `${msg} 획득 포인트: +${pts} P (처치 ${killScore}) — 총 ${metaPoints} P`;
+  log(`🏆 ${msg}`,'player');
+}
+function triggerMissionDefeat(msg){
+  if(gameOver) return;
+  gameOver=true;
+  const overlay=document.getElementById('overlay');
+  const title=document.getElementById('overlayTitle');
+  const reward=document.getElementById('rewardLine');
+  overlay.style.display='flex';
+  title.textContent='DEFEAT'; title.style.color='var(--enemy)';
+  const pts = 20+killScore*2;
+  metaPoints += pts;
+  reward.textContent = `${msg} 획득 포인트: +${pts} P`;
+  log(`💥 ${msg}`,'enemy');
+}
+function spawnRescueStage(idx){
+  const def = rescueStageDefs[idx];
+  if(!def) return;
+  const rx = def.ax + (Math.random()*140-70), ry = def.ay + (Math.random()*140-70);
+  const hostage = makeUnit('hero','player', rx, ry);
+  hostage.hp=55; hostage.maxHp=55; hostage.dmg=1; hostage.def=1;
+  hostage.name=`${def.name} (포로)`; hostage.gender='female'; hostage.isHeroine=true;
+  hostage.ability=null; hostage.abilityName='포로 상태'; hostage.abilityDesc='구출되기 전까지는 무적이지만 전투력이 없습니다. 안전하게 본진까지 데려가세요.';
+  hostage.rescueGrace = elapsed + 15; // 등장 후 15초간은 적이 그녀를 감지하지 못함
+  hostage._needsEscort = true; // 근처에 아군이 없으면 스스로 움직이지 못함 (호위 필요)
+  hostage._captive = true; // 무적 + 결박 상태(모션 없음) 표시
+  hostage._joinAbility = def.abilityKey; hostage._joinAbilityName = def.abilityName; hostage._joinDesc = def.desc;
+  entities.push(hostage);
+  rescueTargets.push({id:hostage.id, name:def.name, rescued:false, lost:false});
+  for(let i=0;i<5;i++){
+    const ang = Math.random()*Math.PI*2;
+    const gd = 200 + Math.random()*80; // 경비병은 즉시 덮치지 않도록 거리 확보
+    const g = makeUnit('combat','enemy', rx+Math.cos(ang)*gd, ry+Math.sin(ang)*gd);
+    entities.push(g);
+  }
+  log(`🎬 스테이지 ${idx+1}/${rescueStageDefs.length}: ${def.name}을(를) 찾아 구출하세요.`,'player');
+}
+function advanceRescueStage(){
+  rescueStage++;
+  if(rescueStage < rescueStageDefs.length){
+    spawnRescueStage(rescueStage);
+  } else {
+    const done = rescueTargets.filter(r=>r.rescued).length;
+    if(done === rescueStageDefs.length){
+      triggerMissionVictory(`영웅 ${done}명을 전원 구출했습니다! 완벽한 작전 성공!`, 300);
+    } else {
+      log(`🏁 모든 구출 스테이지를 완료했습니다! (구출 ${done}/${rescueStageDefs.length}) 이제 적 본진을 격파해 최종 승리하세요.`,'player');
+    }
+  }
+}
+function updateEscortConvoy(convoy){
+  if(escortWpIndex >= escortWaypoints.length) return;
+  let wp = escortWaypoints[escortWpIndex];
+  if(dist(convoy, wp) < 40 && escortWpIndex < escortWaypoints.length-1){
+    escortWpIndex++;
+    wp = escortWaypoints[escortWpIndex];
+  }
+  convoy.moveTarget = {x:wp.x, y:wp.y};
+  convoy.attackTarget = null;
+}
+function checkMissionObjectives(){
+  if(gameOver) return;
+  if(missionMode==='tutorial'){
+    if(tutorialStep < TUTORIAL_STEPS.length-1 && TUTORIAL_STEPS[tutorialStep].check()){
+      tutorialStep++;
+      log(`📘 튜토리얼 ${tutorialStep}/${TUTORIAL_STEPS.length-1} 단계 완료!`,'player');
+      if(tutorialStep >= TUTORIAL_STEPS.length-1){
+        triggerMissionVictory('튜토리얼을 모두 완료했습니다!', 80);
+      }
+    }
+    return;
+  }
+  if(missionMode==='rescue'){
+    const pHQ = entities.find(e=>e.team==='player'&&e.type==='hq'&&!e.dead);
+    for(const rt of rescueTargets){
+      if(rt.rescued || rt.lost) continue;
+      const hostage = entities.find(e=>e.id===rt.id);
+      if(!hostage || hostage.dead){
+        rt.lost = true;
+        log(`💔 ${rt.name}을(를) 구출하지 못했습니다.`,'enemy');
+        advanceRescueStage();
+        continue;
+      }
+      if(pHQ && dist(hostage,pHQ) < pHQ.radius+30){
+        rt.rescued = true;
+        hostage.hp = 240; hostage.maxHp = 240; hostage.dmg = 11; hostage.def = 7; hostage.range = 62; hostage.speed = 60;
+        hostage._needsEscort = false;
+        hostage._captive = false;
+        hostage.name = `${rt.name} (아군 영웅)`;
+        hostage.ability = hostage._joinAbility || null;
+        hostage.abilityName = hostage._joinAbilityName || '지원군 합류';
+        hostage.abilityDesc = (hostage._joinDesc || '주변 아군을 지원합니다') + ' (구출된 영웅)';
+        teams.player.gold += 100;
+        particles.push({x:hostage.x,y:hostage.y-30,life:1.3,txt:'RESCUED!',color:'#ffd24f'});
+        log(`🎉 ${rt.name}을(를) 무사히 구출했습니다! 아군 영웅으로 합류하고 골드 100을 획득했습니다. (스테이지 ${rescueStage+1}/${rescueStageDefs.length} 완료)`,'player');
+        advanceRescueStage();
+      }
+    }
+  } else if(missionMode==='escort'){
+    const convoy = entities.find(e=>e.id===escortId);
+    if(!convoy || convoy.dead){ triggerMissionDefeat('호송대가 전멸했습니다.'); return; }
+    updateEscortConvoy(convoy);
+    const finalWp = escortWaypoints[escortWaypoints.length-1];
+    if(dist(convoy, finalWp) < 40){ triggerMissionVictory('호송대가 목적지에 무사히 도착했습니다!', 150); }
+  } else if(missionMode==='boss'){
+    const boss = entities.find(e=>e.id===bossId);
+    if(!boss || boss.dead){ triggerMissionVictory(`${FACTIONS[enemyFactionKey].name} 최종병기를 격파했습니다!`, 220); }
+  } else if(missionMode==='courier'){
+    const courier = entities.find(e=>e.id===courierId);
+    if(!courier || courier.dead){ triggerMissionDefeat('전령이 사망했습니다.'); return; }
+    if(dist(courier, courierDest) < 40){ triggerMissionVictory('전령이 제한 시간 내에 목적지에 도착했습니다!', 150); return; }
+    if(elapsed >= courierDeadline){ triggerMissionDefeat('제한 시간을 초과했습니다.'); return; }
+  }
+}
+
+// ---------- RENDER ----------
+function drawTerrain(){
+  // 카메라가 보고 있는 영역만 채움 (뷰포트 기준, translate 되어있으므로 world 좌표로 지정)
+  const g = ctx.createLinearGradient(camera.x,camera.y,camera.x,camera.y+VIEW_H);
+  g.addColorStop(0,'#12190f'); g.addColorStop(1,'#0c120c');
+  ctx.fillStyle=g;
+  ctx.fillRect(camera.x,camera.y,VIEW_W,VIEW_H);
+
+  ctx.strokeStyle='rgba(255,255,255,0.035)'; ctx.lineWidth=1;
+  const startX = Math.floor(camera.x/60)*60, endX = camera.x+VIEW_W+60;
+  const startY = Math.floor(camera.y/60)*60, endY = camera.y+VIEW_H+60;
+  for(let x=startX;x<endX;x+=60){ ctx.beginPath(); ctx.moveTo(x,camera.y); ctx.lineTo(x,camera.y+VIEW_H); ctx.stroke(); }
+  for(let y=startY;y<endY;y+=60){ ctx.beginPath(); ctx.moveTo(camera.x,y); ctx.lineTo(camera.x+VIEW_W,y); ctx.stroke(); }
+
+  for(const c of clouds){
+    const x = mod(c.x0 + elapsed*c.vx, WORLD_W);
+    const y = mod(c.y0 + elapsed*c.vy, WORLD_H);
+    if(x<camera.x-c.size||x>camera.x+VIEW_W+c.size||y<camera.y-c.size||y>camera.y+VIEW_H+c.size) continue;
+    const g = ctx.createRadialGradient(x,y,0,x,y,c.size);
+    g.addColorStop(0,'rgba(0,0,0,0.16)'); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.ellipse(x,y,c.size,c.size*0.6,0,0,7); ctx.fill();
+  }
+
+  for(const pd of ponds){
+    if(pd.x<camera.x-150||pd.x>camera.x+VIEW_W+150||pd.y<camera.y-150||pd.y>camera.y+VIEW_H+150) continue;
+    ctx.save(); ctx.translate(pd.x,pd.y); ctx.rotate(pd.rot);
+    ctx.beginPath(); ctx.ellipse(0,0,pd.rx,pd.ry,0,0,7);
+    ctx.fillStyle='rgba(40,90,120,0.55)'; ctx.fill();
+    ctx.strokeStyle='rgba(120,180,210,0.5)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0,0,pd.rx*0.6,pd.ry*0.6,0,0,7);
+    ctx.strokeStyle='rgba(160,210,230,0.25)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.restore();
+  }
+
+  for(const p of props){
+    if(p.x<camera.x-30||p.x>camera.x+VIEW_W+30||p.y<camera.y-30||p.y>camera.y+VIEW_H+30) continue;
+    drawProp(p);
+  }
+
+  // 진영 구역 표시 (은은한 코너 글로우)
+  const rp = ctx.createRadialGradient(180,WORLD_H-180,20,180,WORLD_H-180,300);
+  rp.addColorStop(0,rgbaOf(FACTIONS[playerFactionKey].accent,0.10)); rp.addColorStop(1,rgbaOf(FACTIONS[playerFactionKey].accent,0));
+  ctx.fillStyle=rp; ctx.fillRect(camera.x,camera.y,VIEW_W,VIEW_H);
+  const re = ctx.createRadialGradient(WORLD_W-180,180,20,WORLD_W-180,180,300);
+  re.addColorStop(0,rgbaOf(FACTIONS[enemyFactionKey].accent,0.10)); re.addColorStop(1,rgbaOf(FACTIONS[enemyFactionKey].accent,0));
+  ctx.fillStyle=re; ctx.fillRect(camera.x,camera.y,VIEW_W,VIEW_H);
+}
+
+function drawProp(p){
+  ctx.save(); ctx.translate(p.x,p.y);
+  if(p.type==='rock'){
+    ctx.fillStyle='#2b333c'; ctx.strokeStyle='#3d4756'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.ellipse(0,0,p.size,p.size*0.62,p.seed*3,0,7);
+    ctx.fill(); ctx.stroke();
+  } else if(p.type==='tree'){
+    ctx.strokeStyle='#3d2f22'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(0,4); ctx.lineTo(0,p.size*1.1); ctx.stroke();
+    ctx.fillStyle='#1e3823'; ctx.beginPath(); ctx.arc(0,0,p.size*0.75,0,7); ctx.fill();
+    ctx.strokeStyle='#2c5439'; ctx.lineWidth=1; ctx.stroke();
+  } else if(p.type==='bush'){
+    ctx.fillStyle='#22391f'; ctx.strokeStyle='#345234'; ctx.lineWidth=1;
+    for(let i=0;i<3;i++){
+      ctx.beginPath();
+      ctx.arc((i-1)*p.size*0.45, Math.sin(i+p.seed*5)*2, p.size*0.5,0,7);
+      ctx.fill(); ctx.stroke();
+    }
+  } else if(p.type==='crate'){
+    ctx.fillStyle='#4a3620'; ctx.strokeStyle='#6b4e2c'; ctx.lineWidth=1.5;
+    const s=p.size*0.8;
+    ctx.save(); ctx.rotate(p.seed*0.6-0.3);
+    ctx.beginPath(); ctx.rect(-s/2,-s/2,s,s); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-s/2,-s/2); ctx.lineTo(s/2,s/2); ctx.moveTo(s/2,-s/2); ctx.lineTo(-s/2,s/2); ctx.stroke();
+    ctx.restore();
+  } else if(p.type==='crater'){
+    ctx.fillStyle='rgba(10,12,10,0.55)'; ctx.strokeStyle='rgba(60,50,40,0.6)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(0,0,p.size*1.1,p.size*0.7,p.seed*2,0,7); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle='rgba(90,70,50,0.35)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.ellipse(0,0,p.size*1.5,p.size*0.95,p.seed*2,0,7); ctx.stroke();
+  } else if(p.type==='wreckage'){
+    ctx.save(); ctx.rotate(p.seed*3);
+    ctx.fillStyle='#2a2622'; ctx.strokeStyle='#4a1f14'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(-p.size,0.3*p.size); ctx.lineTo(-0.3*p.size,-0.5*p.size); ctx.lineTo(0.7*p.size,-0.2*p.size); ctx.lineTo(p.size,0.4*p.size); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle='rgba(255,120,40,0.5)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,-0.5*p.size); ctx.lineTo(0.2*p.size,-1.1*p.size); ctx.stroke();
+    ctx.restore();
+  } else if(p.type==='barbwire'){
+    ctx.strokeStyle='#5a5f66'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(-p.size,0); ctx.lineTo(p.size,0); ctx.stroke();
+    ctx.lineWidth=1;
+    for(let i=-2;i<=2;i++){
+      ctx.beginPath();
+      ctx.moveTo(i*p.size*0.4,-3); ctx.lineTo(i*p.size*0.4,3);
+      ctx.moveTo(i*p.size*0.4-3,-2); ctx.lineTo(i*p.size*0.4+3,2);
+      ctx.stroke();
+    }
+  } else if(p.type==='sandbag'){
+    ctx.fillStyle='#5c4f36'; ctx.strokeStyle='#3f3524'; ctx.lineWidth=1;
+    for(let i=-2;i<=2;i++){
+      ctx.beginPath();
+      ctx.ellipse(i*p.size*0.42, Math.abs(i)%2*p.size*0.32, p.size*0.32, p.size*0.22, 0, 0, 7);
+      ctx.fill(); ctx.stroke();
+    }
+  } else {
+    // 풀 - 바람에 살랑이는 애니메이션
+    const sway = Math.sin(elapsed*1.4 + p.seed*6)*2.5;
+    ctx.strokeStyle='#2e4a34'; ctx.lineWidth=1.5; ctx.lineCap='round';
+    for(let i=-1;i<=1;i++){
+      ctx.beginPath(); ctx.moveTo(i*3,3); ctx.lineTo(i*3+(i+p.seed>0?2:-2)+sway, -p.size*0.6); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawDustMotes(){
+  ctx.fillStyle='rgba(255,255,255,0.09)';
+  const N=32;
+  for(let i=0;i<N;i++){
+    const sx = mod(i*277 + elapsed*9, VIEW_W);
+    const sy = mod(i*151 + elapsed*5 + Math.sin(elapsed*0.6+i)*15, VIEW_H);
+    ctx.beginPath(); ctx.arc(sx, sy, 1.1, 0, 7); ctx.fill();
+  }
+}
+function drawAttackMoveCursor(){
+  if(!attackMoveMode) return;
+  const x=screenMouse.x, y=screenMouse.y;
+  const pulse = 1+Math.sin(elapsed*8)*0.12;
+  ctx.save();
+  ctx.strokeStyle='#ff4d4d'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(x,y,11*pulse,0,7); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x-18,y); ctx.lineTo(x-6,y);
+  ctx.moveTo(x+6,y); ctx.lineTo(x+18,y);
+  ctx.moveTo(x,y-18); ctx.lineTo(x,y-6);
+  ctx.moveTo(x,y+6); ctx.lineTo(x,y+18);
+  ctx.stroke();
+  ctx.fillStyle='#ff4d4d'; ctx.beginPath(); ctx.arc(x,y,1.6,0,7); ctx.fill();
+  ctx.font='10px JetBrains Mono'; ctx.textAlign='center'; ctx.fillStyle='#ff4d4d';
+  ctx.fillText('공격 이동', x, y+32);
+  ctx.restore();
+}
+function drawFormationCursor(){
+  if(!formationMode || formationDragging) return;
+  const x=screenMouse.x, y=screenMouse.y;
+  const pulse = 1+Math.sin(elapsed*8)*0.12;
+  ctx.save();
+  ctx.strokeStyle='#5fd6ff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x-14*pulse,y); ctx.lineTo(x+14*pulse,y); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x-14*pulse,y,3,0,7); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+14*pulse,y,3,0,7); ctx.stroke();
+  ctx.font='10px JetBrains Mono'; ctx.textAlign='center'; ctx.fillStyle='#5fd6ff';
+  ctx.fillText('드래그로 대형 지정', x, y+28);
+  ctx.restore();
+}
+function drawFormationPreview(){
+  if(!formationDragging || !formationStart) return;
+  const p1=formationStart, p2=mouse;
+  ctx.save();
+  ctx.strokeStyle='rgba(95,214,255,0.7)'; ctx.lineWidth=2; ctx.setLineDash([6,5]);
+  ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke(); ctx.setLineDash([]);
+  const units = selection.filter(s=>s.kind==='unit' && s.team==='player');
+  const n = units.length;
+  for(let i=0;i<n;i++){
+    const t = n>1 ? i/(n-1) : 0.5;
+    const x = p1.x+(p2.x-p1.x)*t, y = p1.y+(p2.y-p1.y)*t;
+    ctx.beginPath(); ctx.arc(x,y,7,0,7);
+    ctx.fillStyle='rgba(95,214,255,0.25)'; ctx.fill();
+    ctx.strokeStyle='#5fd6ff'; ctx.lineWidth=1.5; ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawVignette(){
+  const g = ctx.createRadialGradient(VIEW_W/2,VIEW_H/2, VIEW_H*0.35, VIEW_W/2,VIEW_H/2, VIEW_H*0.85);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,0.38)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,VIEW_W,VIEW_H);
+}
+function drawTutorialBanner(){
+  if(missionMode!=='tutorial' || gameOver) return;
+  const step = TUTORIAL_STEPS[Math.min(tutorialStep, TUTORIAL_STEPS.length-1)];
+  const w = Math.min(680, VIEW_W-30), h=52;
+  const x = (VIEW_W-w)/2, y=12;
+  ctx.save();
+  ctx.fillStyle='rgba(10,14,20,0.9)'; ctx.strokeStyle='#5fd68a'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.rect(x,y,w,h); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#5fd68a'; ctx.font='bold 11px Chakra Petch'; ctx.textAlign='center';
+  ctx.fillText(`📘 튜토리얼 ${Math.min(tutorialStep+1,TUTORIAL_STEPS.length)}/${TUTORIAL_STEPS.length}`, VIEW_W/2, y+18);
+  ctx.fillStyle='#fff'; ctx.font='12px Chakra Petch';
+  ctx.fillText(step.text, VIEW_W/2, y+38);
+  ctx.restore();
+}
+function drawMinimap(){
+  // 화면 고정 UI이므로 world translate가 풀린 상태(screen space)에서 호출해야 함
+  ctx.save();
+  ctx.fillStyle='rgba(6,8,12,0.82)';
+  ctx.strokeStyle='#2a3242'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.rect(MM_X,MM_Y,MM_W,MM_H); ctx.fill(); ctx.stroke();
+
+  const sx = MM_W/WORLD_W, sy = MM_H/WORLD_H;
+  for(const pd of ponds){
+    const mx = MM_X + pd.x*sx, my = MM_Y + pd.y*sy;
+    ctx.fillStyle='rgba(90,160,200,0.7)'; ctx.beginPath(); ctx.ellipse(mx,my,pd.rx*sx,pd.ry*sy,0,0,7); ctx.fill();
+  }
+  for(const en of entities){
+    if(en.dead) continue;
+    const mx = MM_X + en.x*sx, my = MM_Y + en.y*sy;
+    ctx.fillStyle = colorFor(en);
+    const r = en.kind==='building' ? 3 : (en.isHero?2.4:1.6);
+    ctx.beginPath(); ctx.arc(mx,my,r,0,7); ctx.fill();
+  }
+  for(const cp of controlPoints){
+    const mx = MM_X + cp.x*sx, my = MM_Y + cp.y*sy;
+    const col = cp.owner ? factionAccentForTeam(cp.owner) : '#8a93a3';
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.moveTo(mx,my-3); ctx.lineTo(mx+3,my); ctx.lineTo(mx,my+3); ctx.lineTo(mx-3,my); ctx.closePath(); ctx.fill();
+  }
+  for(const m of mines){
+    if(m.amount<=0) continue;
+    const mx = MM_X + m.x*sx, my = MM_Y + m.y*sy;
+    ctx.fillStyle='#eef2f6'; ctx.fillRect(mx-1,my-1,2,2);
+  }
+  ctx.strokeStyle='#fff'; ctx.lineWidth=1;
+  ctx.strokeRect(MM_X+camera.x*sx, MM_Y+camera.y*sy, VIEW_W*sx, VIEW_H*sy);
+  ctx.font='9px JetBrains Mono'; ctx.fillStyle='#6b7c8f'; ctx.textAlign='left';
+  ctx.fillText('MAP', MM_X+4, MM_Y-4);
+  ctx.restore();
+}
+function drawMines(){
+  for(const m of mines){
+    if(m.amount<=0) continue;
+    const r = 14+8*(m.amount/MINE_AMOUNT);
+    ctx.beginPath(); ctx.arc(m.x,m.y,r,0,7);
+    ctx.fillStyle='rgba(232,179,57,0.18)'; ctx.fill();
+    ctx.strokeStyle='#e8b339'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#e8b339'; ctx.font='10px JetBrains Mono'; ctx.textAlign='center';
+    ctx.fillText(Math.round(m.amount), m.x, m.y+3);
+    if(m.claimedBy){
+      ctx.beginPath(); ctx.arc(m.x,m.y,r+5,0,7);
+      ctx.strokeStyle='rgba(160,220,200,0.6)'; ctx.lineWidth=1; ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+}
+function drawCourierDest(){
+  if(missionMode!=='courier' || !courierDest) return;
+  const pulse = 1+Math.sin(elapsed*4)*0.15;
+  ctx.beginPath(); ctx.arc(courierDest.x, courierDest.y, 28*pulse, 0, 7);
+  ctx.strokeStyle='rgba(255,210,79,0.85)'; ctx.lineWidth=3; ctx.stroke();
+  ctx.fillStyle='#ffd24f'; ctx.font='bold 11px Chakra Petch'; ctx.textAlign='center';
+  ctx.fillText('📨 목적지', courierDest.x, courierDest.y-36);
+}
+function drawControlPoints(){
+  for(const cp of controlPoints){
+    const ownerCol = cp.owner ? factionAccentForTeam(cp.owner) : '#8a93a3';
+    ctx.beginPath(); ctx.arc(cp.x,cp.y,cp.radius,0,7);
+    ctx.fillStyle = rgbaOf(ownerCol,0.12); ctx.fill();
+    ctx.strokeStyle = ownerCol; ctx.lineWidth=2; ctx.setLineDash([6,4]); ctx.stroke(); ctx.setLineDash([]);
+    if(cp._lastCapturingTeam && cp.owner!==cp._lastCapturingTeam){
+      const capCol = factionAccentForTeam(cp._lastCapturingTeam);
+      ctx.beginPath(); ctx.arc(cp.x,cp.y,cp.radius+7,-Math.PI/2, -Math.PI/2 + (cp.progress/100)*Math.PI*2);
+      ctx.strokeStyle=capCol; ctx.lineWidth=4; ctx.stroke();
+    }
+    ctx.save(); ctx.translate(cp.x,cp.y);
+    ctx.strokeStyle=ownerCol; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(0,-4); ctx.lineTo(0,-30); ctx.stroke();
+    ctx.fillStyle=ownerCol;
+    ctx.beginPath(); ctx.moveTo(0,-30); ctx.lineTo(17,-24); ctx.lineTo(0,-18); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle=ownerCol; ctx.font='10px JetBrains Mono'; ctx.textAlign='center';
+    const guardCount = entities.filter(en=>!en.dead && en.team==='neutral' && dist(en,cp)<=cp.radius+10).length;
+    const label = cp.owner ? `${FACTIONS[factionOf({team:cp.owner})].name} 점령` : (guardCount>0 ? `🛡 수비대 ${guardCount}기 (점령불가)` : '중립 거점');
+    ctx.fillText(label, cp.x, cp.y+cp.radius+15);
+  }
+}
+function factionOf(en){ return en.faction || (en.team==='player'?playerFactionKey:enemyFactionKey); }
+function colorFor(en){ if(en.team==='neutral') return '#9aa3ad'; const fk=factionOf(en); return fk ? FACTIONS[fk].accent : (en.team==='player'?'#3fd4c0':'#e35b6a'); }
+function skinEffectLevelForUnit(u){
+  if(!u.faction || !SKIN_PACKS[u.faction]) return 0;
+  const def = SKIN_PACKS[u.faction].find(s=>s.id===equippedSkin[u.faction]);
+  return def ? (def.fx||0) : 0;
+}
+function factionAccentForTeam(team){ return FACTIONS[team==='player'?playerFactionKey:enemyFactionKey].accent; }
+function hexToRgb(hex){ hex=hex.replace('#',''); if(hex.length===3) hex=hex.split('').map(c=>c+c).join(''); const num=parseInt(hex,16); return {r:(num>>16)&255,g:(num>>8)&255,b:num&255}; }
+function rgbaOf(hex,a){ const c=hexToRgb(hex); return `rgba(${c.r},${c.g},${c.b},${a})`; }
+function shadeOf(hex,pct){ const c=hexToRgb(hex); const t = pct<0?0:255; const p=Math.abs(pct);
+  return `rgb(${Math.round((t-c.r)*p+c.r)},${Math.round((t-c.g)*p+c.g)},${Math.round((t-c.b)*p+c.b)})`; }
+
+// stickman renderer
+function drawVehicle(u){
+  const teamCol = colorFor(u);
+  const flashing = (elapsed - u.lastHit) < 0.12;
+  const facing = u._facing || 1;
+  const wobble = u._isMoving ? Math.sin(u._legPhase*1.4)*1.2 : 0;
+
+  drawSkinEffects(u);
+  // shadow
+  ctx.beginPath();
+  ctx.ellipse(u.x, u.y+u.radius*0.8, u.radius*0.95, u.radius*0.35, 0, 0, 7);
+  ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fill();
+
+  ctx.save();
+  ctx.translate(u.x, u.y+wobble);
+  ctx.scale(facing,1);
+  const s = u.radius/11;
+
+  // 바퀴
+  ctx.fillStyle='#161a22'; ctx.strokeStyle='#333c4a'; ctx.lineWidth=1;
+  for(const wx of [-7*s, 7*s]){
+    ctx.beginPath(); ctx.arc(wx, 6*s, 3.4*s, 0, 7); ctx.fill(); ctx.stroke();
+  }
+  // 차체
+  ctx.fillStyle = flashing ? '#fff' : rgbaOf(teamCol,0.9);
+  ctx.strokeStyle = flashing ? '#fff' : teamCol; ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(-11*s,3*s); ctx.lineTo(-9*s,-3*s); ctx.lineTo(9*s,-3*s); ctx.lineTo(11*s,3*s); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // 조종실
+  ctx.fillStyle = flashing ? '#fff' : (u.accent||teamCol);
+  ctx.beginPath(); ctx.rect(-4*s,-7*s,8*s,4*s); ctx.fill(); ctx.strokeStyle=teamCol; ctx.stroke();
+  // 포신/무기 (진영별)
+  ctx.strokeStyle = flashing ? '#fff' : (u.accent||teamCol);
+  if(u.faction==='usa'){ ctx.lineWidth=4.5; ctx.beginPath(); ctx.moveTo(2*s,-5*s); ctx.lineTo(15*s,-8*s); ctx.stroke(); }
+  else if(u.faction==='japan'){ ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(3*s,-5*s); ctx.lineTo(11*s,-6*s); ctx.moveTo(3*s,-3*s); ctx.lineTo(11*s,-4*s); ctx.stroke(); }
+  else { ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(2*s,-5*s); ctx.lineTo(12*s,-6*s); ctx.stroke(); }
+  ctx.restore();
+
+  if(nearbyHero(u)){
+    const pulse = 1 + Math.sin(elapsed*4)*0.08;
+    ctx.beginPath(); ctx.arc(u.x,u.y,(u.radius+7)*pulse,0,7);
+    ctx.strokeStyle='rgba(255,210,79,0.75)'; ctx.lineWidth=2; ctx.stroke();
+  }
+}
+
+function drawHelicopter(u){
+  const teamCol = colorFor(u);
+  const flashing = (elapsed - u.lastHit) < 0.12;
+  const facing = u._facing || 1;
+  const hover = Math.sin(elapsed*3 + u.id)*2;
+  const altitude = 14;
+
+  drawSkinEffects(u);
+  // 지면 그림자 (기체와 분리되어 있어 고도감을 줌)
+  ctx.beginPath();
+  ctx.ellipse(u.x, u.y+u.radius*0.5, u.radius*0.7, u.radius*0.25, 0, 0, 7);
+  ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fill();
+
+  ctx.save();
+  ctx.translate(u.x, u.y - altitude + hover);
+  ctx.scale(facing,1);
+  const s = u.radius/11;
+
+  // 로터 블러
+  ctx.save(); ctx.rotate(elapsed*30);
+  ctx.strokeStyle='rgba(200,210,220,0.35)'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.ellipse(0,-3*s,13*s,3*s,0,0,7); ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(0,-3*s); ctx.lineTo(0,-1*s); ctx.stroke();
+
+  // 테일 붐 + 테일 로터
+  ctx.strokeStyle= flashing?'#fff':teamCol; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(-3*s,0); ctx.lineTo(-13*s,-2*s); ctx.stroke();
+  ctx.strokeStyle='rgba(200,210,220,0.5)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(-13*s,-2*s,2*s,0,7); ctx.stroke();
+
+  // 동체
+  ctx.fillStyle = flashing?'#fff':rgbaOf(teamCol,0.92);
+  ctx.strokeStyle = flashing?'#fff':teamCol; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(1*s,0,7*s,3.4*s,0,0,7); ctx.fill(); ctx.stroke();
+  // 조종석
+  ctx.fillStyle= flashing?'#fff':(u.accent||teamCol);
+  ctx.beginPath(); ctx.ellipse(5*s,-0.5*s,2.6*s,2*s,0,0,7); ctx.fill(); ctx.strokeStyle=teamCol; ctx.stroke();
+  // 무장 포드
+  ctx.strokeStyle=flashing?'#fff':(u.accent||teamCol); ctx.lineWidth= u.faction==='usa'?3:2;
+  ctx.beginPath(); ctx.moveTo(-1*s,3*s); ctx.lineTo(6*s,4*s); ctx.stroke();
+  ctx.restore();
+
+  if(nearbyHero(u)){
+    const pulse = 1 + Math.sin(elapsed*4)*0.08;
+    ctx.beginPath(); ctx.arc(u.x,u.y-altitude,(u.radius+7)*pulse,0,7);
+    ctx.strokeStyle='rgba(255,210,79,0.75)'; ctx.lineWidth=2; ctx.stroke();
+  }
+}
+
+function drawSkinEffects(u){
+  const fx = skinEffectLevelForUnit(u);
+  if(fx<=0) return;
+  if(u._trail && u._trail.length>0){
+    for(let i=0;i<u._trail.length;i++){
+      const p = u._trail[i];
+      const age = elapsed-p.t;
+      if(age>0.4) continue;
+      const a = Math.max(0,1-age/0.4) * 0.4;
+      ctx.beginPath(); ctx.arc(p.x,p.y, u.radius*0.45, 0, 7);
+      ctx.fillStyle = rgbaOf(u.accent, a);
+      ctx.fill();
+    }
+  }
+  if(fx>=2){
+    const pulse = 1+Math.sin(elapsed*5)*0.15;
+    ctx.beginPath(); ctx.arc(u.x,u.y,(u.radius+8)*pulse,0,7);
+    ctx.strokeStyle = rgbaOf(u.accent,0.4); ctx.lineWidth=2; ctx.stroke();
+  }
+  if(fx>=3){
+    const pulse2 = 1+Math.sin(elapsed*7+1)*0.2;
+    ctx.beginPath(); ctx.arc(u.x,u.y,(u.radius+13)*pulse2,0,7);
+    ctx.strokeStyle = rgbaOf(u.accent2||u.accent,0.32); ctx.lineWidth=2; ctx.stroke();
+  }
+}
+function drawStickman(u){
+  const teamCol = colorFor(u);
+  const stealth = isStealthed(u);
+  const flashing = (elapsed - u.lastHit) < 0.12;
+  const swing = (u._isMoving && !u._captive) ? Math.sin(u._legPhase)*5 : 0;
+  const armSwing = (u._isMoving && !u._captive) ? Math.sin(u._legPhase)*3 : 0;
+  const facing = u._facing || 1;
+
+  drawSkinEffects(u);
+  // shadow
+  ctx.beginPath();
+  ctx.ellipse(u.x, u.y+u.radius*0.85, u.radius*0.75, u.radius*0.28, 0, 0, 7);
+  ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fill();
+
+  ctx.save();
+  const tremble = u._captive ? Math.sin(elapsed*22 + u.id)*0.6 : 0;
+  ctx.translate(u.x+tremble, u.y);
+  ctx.scale(facing,1);
+  ctx.globalAlpha = stealth ? 0.35 : 1;
+  const s = u.radius/9; // scale factor
+  ctx.strokeStyle = flashing ? '#ffffff' : teamCol;
+  ctx.lineWidth = u.isHero ? 3.2 : 2.2;
+  ctx.lineCap='round';
+  // legs (swing while moving / 포로는 무릎 꿇은 자세)
+  ctx.beginPath();
+  if(u._captive){
+    ctx.moveTo(0,2*s); ctx.lineTo(-2.2*s,5*s); ctx.lineTo(-1.6*s,8.5*s);
+    ctx.moveTo(0,2*s); ctx.lineTo(2.2*s,5*s); ctx.lineTo(1.6*s,8.5*s);
+  } else {
+    ctx.moveTo(0,2*s); ctx.lineTo(-5*s+swing*0.4,11*s);
+    ctx.moveTo(0,2*s); ctx.lineTo(5*s-swing*0.4,11*s);
+  }
+  ctx.stroke();
+  // body (포로는 무릎 꿇은 만큼 살짝 앞으로 숙임)
+  ctx.beginPath(); ctx.moveTo(0,-6*s); ctx.lineTo(u._captive?0.6*s:0,2*s); ctx.stroke();
+  // back arm
+  if(!u._captive){
+    ctx.beginPath(); ctx.moveTo(0,-3*s); ctx.lineTo(-6*s-armSwing,0.5*s); ctx.stroke();
+  }
+  // weapon + front arm, per role
+  ctx.strokeStyle = flashing ? '#fff' : (u.accent||teamCol);
+  if(u._captive){
+    // 포로: 양손이 앞으로 모여 철제 수갑에 채워지고, 사슬이 땅에 박힌 말뚝까지 이어짐
+    const hx=1.1*s, hy=1.8*s;
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(0,-3*s); ctx.lineTo(hx+0.6*s,hy-0.6*s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0.6*s,-3*s); ctx.lineTo(hx-0.5*s,hy-0.4*s); ctx.stroke();
+    // 철제 수갑(어두운 금속)
+    ctx.fillStyle = flashing ? '#fff' : '#4a4d52';
+    ctx.strokeStyle = flashing ? '#fff' : '#26282b';
+    ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.ellipse(hx, hy, 1.7*s, 1.05*s, 0.15, 0, 7); ctx.fill(); ctx.stroke();
+    // 말뚝에 박힌 쇠사슬 (연결된 고리들)
+    const stakeX = hx+4.2*s, stakeY = hy+2.6*s;
+    let cx=hx+1.3*s, cy=hy+0.5*s;
+    ctx.strokeStyle = flashing ? '#fff' : '#6b6f75'; ctx.lineWidth=1.3;
+    for(let i=0;i<4;i++){
+      const t=(i+1)/4;
+      const px = hx+(stakeX-hx)*t, py = hy+(stakeY-hy)*t;
+      ctx.beginPath(); ctx.ellipse(px,py,0.7*s,0.5*s, -0.5+i*0.4, 0, 7); ctx.stroke();
+    }
+    // 땅에 박힌 말뚝
+    ctx.strokeStyle = flashing ? '#fff' : '#5c4326'; ctx.lineWidth=2.2;
+    ctx.beginPath(); ctx.moveTo(stakeX,stakeY+2.6*s); ctx.lineTo(stakeX,stakeY-1.2*s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(stakeX-1*s,stakeY-1.2*s); ctx.lineTo(stakeX+1*s,stakeY-1.2*s); ctx.stroke();
+  } else if(u.role==='worker'){
+    ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,-3*s); ctx.lineTo(7*s,1*s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4*s,-2*s); ctx.lineTo(10*s,3*s); ctx.stroke(); // 곡괭이
+  } else if(u.role==='shield'){
+    ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(0,-3*s); ctx.lineTo(6*s,0); ctx.stroke(); // 팔
+    ctx.fillStyle = flashing ? '#fff' : rgbaOf(u.accent||teamCol,0.85);
+    ctx.beginPath();
+    ctx.moveTo(6*s,-6*s); ctx.lineTo(9.5*s,-4*s); ctx.lineTo(9.5*s,3*s); ctx.lineTo(6*s,6*s); ctx.lineTo(3*s,3*s); ctx.lineTo(3*s,-4*s); ctx.closePath();
+    ctx.fill(); ctx.strokeStyle=teamCol; ctx.lineWidth=1.4; ctx.stroke(); // 대형 방패
+  } else if(u.faction==='japan' && u.role==='combat'){
+    ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(0,-3*s); ctx.lineTo(8*s,-4*s); ctx.stroke(); // 카타나
+  } else if(u.faction==='usa' && u.role==='combat'){
+    ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(0,-2*s); ctx.lineTo(9*s,-1*s); ctx.stroke(); // 포신
+  } else if(u.role==='combat' || u.isHero || u.role==='mechInfantry'){
+    ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,-3*s); ctx.lineTo(9*s,-2*s); ctx.stroke(); // 소총
+  } else {
+    ctx.beginPath(); ctx.moveTo(0,-3*s); ctx.lineTo(7*s+armSwing,0.5*s); ctx.stroke();
+  }
+  // head (포로는 고개를 아래로 숙인 위치)
+  const headY = u._captive ? -8.4*s : -10*s;
+  const headX = u._captive ? 0.9*s : 0;
+  ctx.beginPath(); ctx.arc(headX,headY,4.5*s,0,7);
+  ctx.fillStyle = flashing ? '#fff' : (u._captive ? '#9a8f7d' : (u.accent || teamCol)); ctx.fill();
+  ctx.strokeStyle = flashing ? '#fff' : (u._captive ? '#5c5449' : teamCol); ctx.lineWidth=1.6; ctx.stroke();
+  if(u._captive){
+    // 축 처진 어깨선(체념한 자세)
+    ctx.strokeStyle = flashing ? '#fff' : '#5c5449'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(-2.5*s,-6.5*s); ctx.lineTo(2.5*s,-5.8*s); ctx.stroke();
+    // 고통스러운 표정: 찡그린 눈썹 + 질끈 감은 눈 + 괴로운 입
+    ctx.strokeStyle = flashing ? '#fff' : '#2a2620'; ctx.lineWidth=0.9; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(headX-2.3*s,headY-1*s); ctx.lineTo(headX-0.7*s,headY-0.4*s); ctx.stroke(); // 왼쪽 눈썹(찡그림)
+    ctx.beginPath(); ctx.moveTo(headX+0.7*s,headY-0.4*s); ctx.lineTo(headX+2.3*s,headY-1*s); ctx.stroke(); // 오른쪽 눈썹
+    ctx.beginPath(); ctx.moveTo(headX-1.9*s,headY+0.3*s); ctx.lineTo(headX-0.6*s,headY+0.6*s); ctx.stroke(); // 왼쪽 감은 눈
+    ctx.beginPath(); ctx.moveTo(headX+0.6*s,headY+0.6*s); ctx.lineTo(headX+1.9*s,headY+0.3*s); ctx.stroke(); // 오른쪽 감은 눈
+    ctx.beginPath(); ctx.moveTo(headX-1.1*s,headY+2.2*s); ctx.quadraticCurveTo(headX,headY+1.5*s,headX+1.1*s,headY+2.2*s); ctx.stroke(); // 괴로운 입(찡그림)
+    // 식은땀
+    ctx.strokeStyle = flashing ? '#fff' : '#7fd4ff'; ctx.lineWidth=1.1;
+    ctx.beginPath(); ctx.moveTo(headX+3.6*s,headY-1.6*s); ctx.lineTo(headX+3.1*s,headY+0.6*s); ctx.stroke();
+  }
+  if(u.role==='worker'){
+    // 안전모 - 진영과 무관하게 항상 주황색이라 공병은 한눈에 구분됨
+    ctx.fillStyle = flashing ? '#fff' : '#ffb020';
+    ctx.beginPath(); ctx.arc(0,-11.8*s,3.9*s,Math.PI,0); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#8a5a10'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillRect(-4.6*s,-12.1*s,9.2*s,1.4*s); ctx.strokeRect(-4.6*s,-12.1*s,9.2*s,1.4*s);
+  } else if(!u._captive && (u.role==='combat' || u.isHero || u.role==='shield' || u.role==='mechInfantry') && !(u.faction==='japan'&&u.role==='combat')){
+    // 전투 헬멧 - 진영 색보다 어두운 톤으로 군용 느낌
+    ctx.fillStyle = flashing ? '#ddd' : shadeOf(teamCol,-0.55);
+    ctx.beginPath(); ctx.arc(0,-11*s,4.1*s,Math.PI*1.02,Math.PI*1.98); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = flashing? '#fff' : shadeOf(teamCol,-0.75); ctx.lineWidth=1; ctx.stroke();
+  } else if(u.faction==='japan' && u.role==='combat'){
+    // 사무라이 투구 (뿔 장식)
+    ctx.strokeStyle = flashing? '#fff' : shadeOf(teamCol,-0.4); ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(-3*s,-13.5*s); ctx.lineTo(-4.2*s,-17*s); ctx.moveTo(3*s,-13.5*s); ctx.lineTo(4.2*s,-17*s); ctx.stroke();
+    ctx.fillStyle = flashing ? '#ddd' : shadeOf(teamCol,-0.5);
+    ctx.beginPath(); ctx.arc(0,-11.5*s,4*s,Math.PI*1.1,Math.PI*1.9); ctx.closePath(); ctx.fill();
+  }
+  if(u.isHeroine && !u._captive){
+    ctx.fillStyle = flashing ? '#fff' : '#ff6fa8';
+    ctx.beginPath(); ctx.moveTo(headX-4.5*s,headY-3*s); ctx.lineTo(headX-7.2*s,headY-5.8*s); ctx.lineTo(headX-5.4*s,headY-1.8*s); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(headX+4.5*s,headY-3*s); ctx.lineTo(headX+7.2*s,headY-5.8*s); ctx.lineTo(headX+5.4*s,headY-1.8*s); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.arc(headX,headY-3*s,1.3*s,0,7); ctx.fill();
+  }
+  if(u.isHero){
+    ctx.fillStyle= u._captive ? 'rgba(255,210,79,0.55)' :'#ffd24f'; ctx.font=`${9*s}px Chakra Petch`; ctx.textAlign='center';
+    ctx.fillText('★', headX, headY-8.5*s);
+  }
+  ctx.restore();
+  if(nearbyHero(u)){
+    const pulse = 1 + Math.sin(elapsed*4)*0.08;
+    ctx.beginPath(); ctx.arc(u.x,u.y,(u.radius+6)*pulse,0,7);
+    ctx.strokeStyle='rgba(255,210,79,0.75)'; ctx.lineWidth=2; ctx.stroke();
+  }
+  if(u.isHero){
+    ctx.beginPath(); ctx.arc(u.x,u.y,auraRadiusFor(u.team),0,7);
+    ctx.strokeStyle=rgbaOf(u.accent,0.15); ctx.lineWidth=1; ctx.setLineDash([4,6]); ctx.stroke(); ctx.setLineDash([]);
+  }
+  if(u.role==='shield'){
+    ctx.beginPath(); ctx.arc(u.x,u.y,SHIELD_PROTECT_RADIUS,0,7);
+    ctx.strokeStyle=rgbaOf(u.accent||teamCol,0.18); ctx.lineWidth=1; ctx.setLineDash([3,5]); ctx.stroke(); ctx.setLineDash([]);
+  }
+  if(u.carrying>0){ ctx.fillStyle='#e8b339'; ctx.beginPath(); ctx.arc(u.x,u.y-u.radius-6,3,0,7); ctx.fill(); }
+  if(u.repairTarget){
+    ctx.strokeStyle='#3fd4c0'; ctx.lineWidth=2; ctx.lineCap='round';
+    const rx=u.x, ry=u.y-u.radius-8;
+    ctx.beginPath(); ctx.moveTo(rx-4,ry+4); ctx.lineTo(rx+4,ry-4); ctx.moveTo(rx-4,ry-4); ctx.lineTo(rx+4,ry+4); ctx.stroke();
+  }
+  if(u._needsEscort && !hasNearbyEscort(u)){
+    const pulse = 0.7+Math.abs(Math.sin(elapsed*4))*0.3;
+    ctx.fillStyle=`rgba(255,210,79,${pulse})`;
+    ctx.font='bold 13px Chakra Petch'; ctx.textAlign='center';
+    ctx.fillText('!', u.x, u.y-u.radius-10);
+  }
+}
+
+function drawEntities(){
+  for(const en of entities){
+    if(en.dead) continue;
+    const isSel = selection.includes(en);
+    const col = colorFor(en);
+    if(en.kind==='building'){
+      ctx.save(); ctx.translate(en.x,en.y);
+      const s=en.radius;
+      // shadow
+      ctx.beginPath(); ctx.ellipse(0,s*0.9,s*1.05,s*0.32,0,0,7);
+      ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fill();
+      // walls
+      ctx.fillStyle = rgbaOf(col,0.20);
+      ctx.strokeStyle=col; ctx.lineWidth=isSel?3:2;
+      ctx.beginPath(); ctx.rect(-s,-s*0.5,s*2,s*1.5); ctx.fill(); ctx.stroke();
+      // roof (triangle)
+      ctx.beginPath(); ctx.moveTo(-s*1.12,-s*0.5); ctx.lineTo(0,-s*1.35); ctx.lineTo(s*1.12,-s*0.5); ctx.closePath();
+      ctx.fillStyle = shadeOf(col,-0.6); ctx.fill(); ctx.strokeStyle=col; ctx.stroke();
+      // flag
+      ctx.strokeStyle=col; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(0,-s*1.35); ctx.lineTo(0,-s*1.85); ctx.stroke();
+      ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(0,-s*1.85); ctx.lineTo(s*0.55,-s*1.72); ctx.lineTo(0,-s*1.6); ctx.closePath(); ctx.fill();
+      // door
+      ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(-s*0.22,s*0.25,s*0.44,s*0.75);
+      if(BUILDING_BASE[en.type].range>0){
+        // 방어 타워 포탑
+        ctx.fillStyle=shadeOf(col,-0.3); ctx.strokeStyle=col; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.arc(0,-s*0.55,s*0.45,0,7); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0,-s*0.55); ctx.lineTo(s*0.9,-s*0.75); ctx.stroke();
+      }
+      if(BUILDING_BASE[en.type].isAutoMiner){
+        // 회전하는 톱니바퀴 (가동 중 표시)
+        const spin = (en.mineTarget && en.mineTarget.amount>0) ? elapsed*2.5 : 0;
+        ctx.save(); ctx.translate(0,-s*0.55); ctx.rotate(spin);
+        ctx.strokeStyle=shadeOf(col,0.2); ctx.lineWidth=2;
+        for(let i=0;i<6;i++){
+          ctx.save(); ctx.rotate(i*Math.PI/3);
+          ctx.beginPath(); ctx.moveTo(0,-s*0.28); ctx.lineTo(0,-s*0.48); ctx.stroke();
+          ctx.restore();
+        }
+        ctx.beginPath(); ctx.arc(0,0,s*0.22,0,7); ctx.fillStyle=shadeOf(col,-0.3); ctx.fill(); ctx.stroke();
+        ctx.restore();
+      }
+      ctx.fillStyle=col; ctx.font='bold 10px Chakra Petch'; ctx.textAlign='center';
+      ctx.fillText(`${FACTIONS[factionOf(en)].name} ${BUILDING_BASE[en.type].name}`,0,-s*1.95-6);
+      ctx.restore();
+      if(isSel && BUILDING_BASE[en.type].range>0){
+        ctx.beginPath(); ctx.arc(en.x,en.y,BUILDING_BASE[en.type].range,0,7);
+        ctx.strokeStyle=rgbaOf(col,0.4); ctx.lineWidth=1; ctx.setLineDash([5,5]); ctx.stroke(); ctx.setLineDash([]);
+      }
+      if(isSel && en.mineTarget){
+        ctx.beginPath(); ctx.moveTo(en.x,en.y); ctx.lineTo(en.mineTarget.x,en.mineTarget.y);
+        ctx.strokeStyle=rgbaOf(col,0.35); ctx.lineWidth=1.5; ctx.setLineDash([2,4]); ctx.stroke(); ctx.setLineDash([]);
+      }
+      if(isSel && BUILDING_BASE[en.type].trains && BUILDING_BASE[en.type].trains.length && (Math.abs(en.rallyX-en.x)>3 || Math.abs(en.rallyY-en.y)>3)){
+        ctx.beginPath(); ctx.moveTo(en.x,en.y); ctx.lineTo(en.rallyX,en.rallyY);
+        ctx.strokeStyle=rgbaOf(col,0.4); ctx.lineWidth=1.5; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]);
+        ctx.save(); ctx.translate(en.rallyX,en.rallyY);
+        ctx.strokeStyle=col; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(0,8); ctx.lineTo(0,-10); ctx.stroke();
+        ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(11,-6); ctx.lineTo(0,-2); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+      drawHpBar(en);
+      if(en.buildProgress<1){
+        ctx.fillStyle='#000'; ctx.fillRect(en.x-20,en.y-4,40,6);
+        ctx.fillStyle='#e8b339'; ctx.fillRect(en.x-20,en.y-4,40*en.buildProgress,6);
+      } else if(en.queue && en.queue.length>0){
+        const item = en.queue[0];
+        const pct = Math.min(1, item.t/item.total);
+        const barY = en.y-4;
+        ctx.fillStyle='#000'; ctx.fillRect(en.x-20,barY,40,6);
+        ctx.fillStyle=col; ctx.fillRect(en.x-20,barY,40*pct,6);
+        ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1; ctx.strokeRect(en.x-20,barY,40,6);
+        const remain = Math.max(0, item.total-item.t).toFixed(1);
+        ctx.fillStyle='#fff'; ctx.font='9px JetBrains Mono'; ctx.textAlign='center';
+        ctx.fillText(`${remain}s`, en.x, barY-3);
+        if(en.queue.length>1){
+          ctx.fillStyle=col; ctx.font='bold 9px Chakra Petch'; ctx.textAlign='left';
+          ctx.fillText(`+${en.queue.length-1}`, en.x+22, barY+5);
+        }
+      }
+    } else {
+      if(en.role==='vehicle'||en.role==='vehicle2'||en.role==='vehicle3') drawVehicle(en);
+      else if(en.role==='air') drawHelicopter(en);
+      else drawStickman(en);
+      if(isSel){
+        ctx.beginPath(); ctx.arc(en.x,en.y,en.radius+8,0,7);
+        ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+      }
+      drawHpBar(en);
+    }
+  }
+}
+function drawHpBar(en){
+  const maxHp=en.maxHp;
+  if(en.kind==='unit' && en.isHero){
+    // 영웅 전용 체력바: 항상 표시, 이름표 포함, 금색 테두리로 구분
+    const w = 46, h=6;
+    const x=en.x-w/2, y=en.y-en.radius-24;
+    ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(x-1,y-1,w+2,h+2);
+    const pct=Math.max(0,en.hp/maxHp);
+    ctx.fillStyle = pct>0.5?'#ffd24f':pct>0.25?'#ff9f43':'#e35b6a';
+    ctx.fillRect(x,y,w*pct,h);
+    ctx.strokeStyle='#ffd24f'; ctx.lineWidth=1; ctx.strokeRect(x,y,w,h);
+    ctx.fillStyle='#ffd24f'; ctx.font='bold 9px Chakra Petch'; ctx.textAlign='center';
+    ctx.fillText(en.name || '영웅', en.x, y-4);
+    return;
+  }
+  if(en.hp>=maxHp && en.kind==='unit' && !selection.includes(en)) return;
+  const w = en.kind==='building'?en.radius*2:22;
+  const x=en.x-w/2, y=en.y-en.radius-(en.kind==='building'?16:12);
+  ctx.fillStyle='#000'; ctx.fillRect(x,y,w,4);
+  const pct=Math.max(0,en.hp/maxHp);
+  ctx.fillStyle = pct>0.5?'#3fd4c0':pct>0.25?'#e8b339':'#e35b6a';
+  ctx.fillRect(x,y,w*pct,4);
+}
+function drawParticles(dt){
+  ctx.font='11px JetBrains Mono'; ctx.textAlign='center';
+  for(const p of particles){
+    p.life -= dt; p.y -= 20*dt;
+    ctx.globalAlpha = Math.max(0,p.life/0.9);
+    ctx.fillStyle=p.color; ctx.fillText(p.txt,p.x,p.y);
+  }
+  ctx.globalAlpha=1;
+  particles = particles.filter(p=>p.life>0);
+}
+function drawProjectiles(dt){
+  for(const pr of projectiles){
+    pr.t += dt;
+    const f = Math.min(1, pr.t/pr.dur);
+    if(pr.kind==='melee'){
+      ctx.save(); ctx.globalAlpha = Math.max(0,1-f);
+      ctx.translate(pr.x,pr.y); ctx.rotate(pr.angle);
+      ctx.strokeStyle = pr.color; ctx.lineWidth=2.5; ctx.lineCap='round';
+      ctx.beginPath(); ctx.arc(0,0, 10+f*8, -0.6, 0.6); ctx.stroke();
+      ctx.restore();
+    } else {
+      const x = pr.x0 + (pr.x1-pr.x0)*f;
+      let y = pr.y0 + (pr.y1-pr.y0)*f;
+      if(pr.kind==='rocket'){
+        y -= Math.sin(f*Math.PI)*18; // 살짝 포물선을 그리며 날아감
+        // 연기 자국
+        ctx.beginPath(); ctx.arc(x,y,2.6,0,7);
+        ctx.fillStyle='rgba(200,200,200,0.35)'; ctx.fill();
+      }
+      const dx = pr.x1-pr.x0, dy = pr.y1-pr.y0;
+      const len = Math.hypot(dx,dy)||1;
+      const bx = x - (dx/len)*(pr.kind==='shell'?12:8), by = y - (dy/len)*(pr.kind==='shell'?12:8);
+      ctx.strokeStyle = pr.color; ctx.lineCap='round';
+      ctx.lineWidth = pr.kind==='shell' ? 3 : pr.kind==='rocket' ? 2.6 : 1.6;
+      ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(x,y); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x,y, pr.kind==='shell'?2.6:1.8, 0,7);
+      ctx.fillStyle='#fff'; ctx.fill();
+    }
+  }
+  projectiles = projectiles.filter(pr=>pr.t < pr.dur);
+}
+function drawCastRings(){
+  const RING_DUR = 0.6;
+  for(const r of castRings){
+    const t = (elapsed-r.start)/RING_DUR;
+    if(t>1) continue;
+    const radius = 20 + t*160;
+    ctx.beginPath(); ctx.arc(r.x,r.y,radius,0,7);
+    ctx.strokeStyle = rgbaOf(r.color, 1-t);
+    ctx.lineWidth = 4*(1-t)+1;
+    ctx.stroke();
+  }
+  castRings = castRings.filter(r => (elapsed-r.start)/RING_DUR <= 1);
+}
+function drawSelectionBox(){
+  if(dragStart && mouse.down){
+    const x1=Math.min(dragStart.x,mouse.x), y1=Math.min(dragStart.y,mouse.y);
+    const w=Math.abs(mouse.x-dragStart.x), h=Math.abs(mouse.y-dragStart.y);
+    ctx.strokeStyle=rgbaOf(FACTIONS[playerFactionKey].accent,0.8); ctx.fillStyle=rgbaOf(FACTIONS[playerFactionKey].accent,0.12);
+    ctx.fillRect(x1,y1,w,h); ctx.strokeRect(x1,y1,w,h);
+  }
+}
+function drawBuildGhost(){
+  if(!buildMode) return;
+  const def = BUILDING_BASE[buildMode];
+  if(!def) return;
+  ctx.save(); ctx.globalAlpha=0.5; ctx.strokeStyle=FACTIONS[playerFactionKey].accent; ctx.lineWidth=2;
+  ctx.strokeRect(mouse.x-def.radius, mouse.y-def.radius, def.radius*2, def.radius*2);
+  ctx.restore();
+}
+
+// ---------- SIDE PANEL ----------
+function renderHeroRoster(){
+  const wrap = document.getElementById('heroRosterWrap');
+  const list = document.getElementById('heroRoster');
+  const heroes = entities.filter(e=>e.kind==='unit' && e.team==='player' && e.isHero && !e.dead);
+  if(heroes.length===0){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  list.innerHTML='';
+  for(const h of heroes){
+    const card = document.createElement('div');
+    card.className='heroCard';
+    const pct = Math.max(0, h.hp/h.maxHp*100);
+    card.innerHTML = `<div class="hname"><span>${h.isHeroine?'♀ ':'★ '}${h.name}</span><span>${Math.round(h.hp)}/${h.maxHp}</span></div>
+      <div class="hbarBg"><div class="hbarFill" style="width:${pct}%"></div></div>`;
+    card.onclick = ()=>{
+      selection=[h];
+      camera.x = h.x-VIEW_W/2; camera.y = h.y-VIEW_H/2; clampCamera();
+      renderSelection(); renderActions(); renderSelectionBar();
+    };
+    list.appendChild(card);
+  }
+}
+const SEL_ICONS = { worker:'⛏️', combat:'⚔️', shield:'🛡️', vehicle:'🚙', vehicle2:'🚙', vehicle3:'🚙', mechInfantry:'🪖', air:'🚁' };
+document.getElementById('selectionBar').addEventListener('wheel', e=>{
+  e.preventDefault();
+  e.currentTarget.scrollLeft += (e.deltaY||e.deltaX) * 0.6;
+}, {passive:false});
+function renderSelectionBar(){
+  const bar = document.getElementById('selectionBar');
+  const units = selection.filter(s=>s.kind==='unit' && !s.dead);
+  if(units.length<=1){ bar.style.display='none'; bar.innerHTML=''; return; }
+  bar.style.display='flex';
+  bar.innerHTML='';
+  for(const u of units){
+    const col = colorFor(u);
+    const pct = Math.max(0, u.hp/u.maxHp*100);
+    const icon = u.isHero ? '★' : (SEL_ICONS[u.role] || '●');
+    const card = document.createElement('div');
+    card.className='selUnitCard';
+    card.innerHTML = `
+      <div class="selPortrait" style="background:${rgbaOf(col,0.22)};border-color:${col};">${icon}</div>
+      <div class="selHpBg"><div class="selHpFill" style="width:${pct}%;background:${pct>50?'#3fd4c0':pct>25?'#e8b339':'#e35b6a'};"></div></div>
+      <div class="selName">${u.name}</div>`;
+    card.title = `${u.name} — HP ${Math.max(0,Math.round(u.hp))}/${u.maxHp}`;
+    card.onclick = ()=>{ selection=[u]; renderSelection(); renderActions(); renderSelectionBar(); };
+    bar.appendChild(card);
+  }
+}
+function renderSelection(){
+  const el = document.getElementById('selInfo');
+  if(selection.length===0){ el.textContent='아무것도 선택되지 않음'; return; }
+  if(selection.length===1){
+    const en = selection[0];
+    const name = en.kind==='unit' ? en.name : BUILDING_BASE[en.type].name;
+    const fk = factionOf(en);
+    const swatch = `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${colorFor(en)};margin-right:5px;"></span>`;
+    el.innerHTML = `<div class="selName">${swatch}${name}</div><div style="color:var(--text-dim);font-size:11px;margin-bottom:2px;">${FACTIONS[fk].name}</div>HP ${Math.max(0,Math.round(en.hp))}/${Math.round(en.maxHp)}
+      <div class="hpbarMini"><div style="width:${Math.max(0,en.hp/en.maxHp*100)}%;background:${colorFor(en)};"></div></div>`;
+  } else {
+    const fk = factionOf(selection[0]);
+    const swatch = `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${colorFor(selection[0])};margin-right:5px;"></span>`;
+    el.innerHTML = `<div class="selName">${swatch}${selection.length}개 유닛 선택됨</div>`;
+  }
+}
+function renderActions(){
+  const el = document.getElementById('actions');
+  el.innerHTML='';
+  if(selection.length===0){ el.innerHTML='<div style="color:var(--text-dim);font-size:12px;">유닛이나 건물을 선택하세요</div>'; return; }
+  const en = selection[0];
+  const f = FACTIONS[playerFactionKey];
+  if(en.kind==='building' && en.team==='player' && BUILDING_BASE[en.type].trains && BUILDING_BASE[en.type].trains.length){
+    for(const role of BUILDING_BASE[en.type].trains){
+      const def = f[role];
+      const key = UNIT_HOTKEYS[role];
+      const pCost = POP_COST[role]||0;
+      const popBlocked = pCost>0 && popUsed('player')+pCost > popCap('player');
+      const btn=document.createElement('button'); btn.className='btn';
+      btn.disabled = teams.player.gold < def.cost || en.buildProgress<1 || popBlocked;
+      const popTag = pCost>0 ? ` <span style="opacity:.6;">(인구${pCost})</span>` : '';
+      btn.innerHTML = `<span>${def.name} 생산${popTag} ${key?`<b style="opacity:.55;font-size:10px;border:1px solid currentColor;border-radius:3px;padding:0 4px;margin-left:2px;">${key.toUpperCase()}</b>`:''}</span><span class="cost">${def.cost}g</span>`;
+      if(popBlocked) btn.title = '인구수가 부족합니다. 서플라이 디포를 건설하세요.';
+      btn.onclick=()=>trainUnit(en,role);
+      el.appendChild(btn);
+    }
+    if(en.queue.length>0){
+      const remain = Math.max(0, en.queue[0].total-en.queue[0].t).toFixed(1);
+      const q=document.createElement('div'); q.style.cssText='font-size:11px;color:var(--text-dim);margin-top:4px;';
+      q.textContent=`생산 중... ${remain}초 남음 (대기열 ${en.queue.length}개)`; el.appendChild(q);
+    }
+  } else if(en.kind==='building' && en.team==='player' && BUILDING_BASE[en.type].isLab){
+    if(en.buildProgress<1){
+      el.innerHTML='<div style="color:var(--text-dim);font-size:12px;">건설이 완료되면 연구를 시작할 수 있습니다</div>';
+    } else {
+      for(const r of RESEARCH_DEFS){
+        const owned = hasResearch(r.id);
+        const wrap = document.createElement('div'); wrap.style.cssText='margin-bottom:6px;';
+        const btn=document.createElement('button'); btn.className='btn'; btn.style.width='100%';
+        btn.disabled = owned || teams.player.gold < r.goldCost;
+        btn.innerHTML = `<span>${r.name}${owned?' ✅':''}</span><span class="cost">${owned?'완료':r.goldCost+'g'}</span>`;
+        btn.onclick=()=>{
+          if(owned || teams.player.gold < r.goldCost) return;
+          teams.player.gold -= r.goldCost;
+          matchResearch.add(r.id);
+          applyResearchEffectToExisting(r.id,'player');
+          log(`🔬 연구 완료: ${r.name}`,'player');
+          renderActions();
+        };
+        const desc=document.createElement('div');
+        desc.style.cssText='font-size:10.5px;color:var(--text-dim);margin:2px 2px 0;';
+        desc.textContent = r.desc;
+        wrap.appendChild(btn); wrap.appendChild(desc);
+        el.appendChild(wrap);
+      }
+    }
+  } else if(en.kind==='building' && en.team==='player' && BUILDING_BASE[en.type].isAutoMiner){
+    if(en.buildProgress<1){
+      el.innerHTML='<div style="color:var(--text-dim);font-size:12px;">건설 중...</div>';
+    } else if(en.mineTarget && en.mineTarget.amount>0){
+      el.innerHTML = `<div style="font-size:12px;">⛏ 초당 ${BUILDING_BASE[en.type].mineRate} 골드 채굴 중</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">연결된 광산 잔량: ${Math.round(en.mineTarget.amount)}</div>`;
+    } else {
+      el.innerHTML = '<div style="font-size:12px;color:var(--text-dim);">연결된 광산이 고갈되었습니다</div>';
+    }
+  } else if(en.kind==='building' && en.team==='player'){
+    el.innerHTML='<div style="color:var(--text-dim);font-size:12px;">이 건물에는 별도 행동이 없습니다</div>';
+  } else if(en.kind==='unit' && en.team==='player' && en.role==='worker'){
+    for(const bt of WORKER_BUILDABLE){
+      const bd = BUILDING_BASE[bt];
+      const key = BUILDING_HOTKEYS[bt];
+      const btn=document.createElement('button'); btn.className='btn';
+      btn.disabled = teams.player.gold < bd.cost;
+      const active = buildMode===bt;
+      btn.innerHTML = `<span>${active?`${bd.name} (위치를 클릭)`:`${bd.name} 건설`} ${key?`<b style="opacity:.55;font-size:10px;border:1px solid currentColor;border-radius:3px;padding:0 4px;margin-left:2px;">${key.toUpperCase()}</b>`:''}</span><span class="cost">${bd.cost}g</span>`;
+      if(active) btn.style.borderColor='var(--player)';
+      btn.onclick=()=>{ buildMode = buildMode===bt?null:bt; renderActions(); };
+      el.appendChild(btn);
+    }
+  } else if(en.kind==='unit' && en.team==='player' && en.isHero){
+    const auraR = auraRadiusFor(en.team);
+    const nearCount = entities.filter(x=>x.kind==='unit'&&x.team==='player'&&!x.dead&&x.id!==en.id&&dist(x,en)<=auraR).length;
+    el.innerHTML = `<div class="selName">🔸 ${en.abilityName} <span style="font-size:10px;color:var(--player);font-weight:400;">(패시브 · 항상 유지)</span></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${en.abilityDesc}</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:6px;">반경 ${Math.round(auraR)} 내 아군에게 자동 적용 중 · 현재 대상 ${nearCount}기</div>`;
+  } else if(en.kind==='unit' && en.team==='player' && en.role==='vehicle3' && en.faction==='korea'){
+    const ready = elapsed >= (en.deployReady||0);
+    const remain = Math.max(0, Math.ceil((en.deployReady||0)-elapsed));
+    const btn=document.createElement('button'); btn.className='btn';
+    btn.disabled = !ready || teams.player.gold < DEPLOY_COST;
+    btn.innerHTML = `<span>🪖 병력 전개 (${DEPLOY_COUNT}명)</span><span class="cost">${ready?DEPLOY_COST+'g':remain+'s'}</span>`;
+    btn.onclick=()=>deployTroops(en);
+    el.appendChild(btn);
+    const desc=document.createElement('div');
+    desc.style.cssText='font-size:11px;color:var(--text-dim);margin-top:4px;';
+    desc.textContent = `기계화 경장갑을 착용한 보병 ${DEPLOY_COUNT}명을 즉시 소환합니다. 쿨다운 ${DEPLOY_COOLDOWN}초.`;
+    el.appendChild(desc);
+  } else {
+    el.innerHTML='<div style="color:var(--text-dim);font-size:12px;">이 유닛에는 행동이 없습니다</div>';
+  }
+}
+function renderDevPanel(){
+  const panel = document.getElementById('devPanel');
+  if(!devMode){ panel.style.display='none'; return; }
+  panel.style.display='block';
+  const wrap = document.getElementById('devButtons');
+  wrap.innerHTML='';
+  const actions = [
+    { label:'💰 내 골드 +1000', fn:()=>{ teams.player.gold += 1000; } },
+    { label:'💰 적 골드 +1000', fn:()=>{ teams.enemy.gold += 1000; } },
+    { label:'⚡ 즉시 승리', fn:()=>{ const eHQ=entities.find(e=>e.team==='enemy'&&e.type==='hq'&&!e.dead); if(eHQ) onHQDestroyed('enemy'); } },
+    { label:'💀 즉시 패배', fn:()=>{ const pHQ=entities.find(e=>e.team==='player'&&e.type==='hq'&&!e.dead); if(pHQ) onHQDestroyed('player'); } },
+    { label:'☠ 적 전멸', fn:()=>{ for(const e of entities){ if(e.team==='enemy'&&e.kind==='unit'&&!e.dead){ e.hp=0; e.dead=true; } } } },
+    { label:`⏱ 속도: ${devTimeScale}x`, fn:(btn)=>{ devTimeScale = devTimeScale>=4?1:devTimeScale*2; btn.textContent=`⏱ 속도: ${devTimeScale}x`; } },
+    { label:`🛡 무적모드: ${devGodMode?'ON':'OFF'}`, fn:(btn)=>{ devGodMode=!devGodMode; btn.textContent=`🛡 무적모드: ${devGodMode?'ON':'OFF'}`; btn.className='devBtn'+(devGodMode?' active':''); } },
+  ];
+  for(const a of actions){
+    const btn = document.createElement('button');
+    btn.className='devBtn'+((a.label.includes('ON'))?' active':'');
+    btn.textContent = a.label;
+    btn.onclick = ()=> a.fn(btn);
+    wrap.appendChild(btn);
+  }
+}
+function renderTopbar(){
+  document.getElementById('goldVal').textContent = Math.floor(teams.player.gold);
+  document.getElementById('unitCount').textContent = entities.filter(e=>e.team==='player'&&e.kind==='unit'&&!e.dead).length;
+  document.getElementById('cpCount').textContent = controlPoints.filter(c=>c.owner==='player').length;
+  document.getElementById('cpTotal').textContent = controlPoints.length;
+  const pUsed = popUsed('player'), pCap = popCap('player');
+  document.getElementById('popUsedVal').textContent = pUsed;
+  document.getElementById('popCapVal').textContent = pCap;
+  document.getElementById('popDisplay').style.color = pUsed>=pCap ? 'var(--enemy)' : 'var(--player)';
+  const clockEl = document.getElementById('clock');
+  const objEl = document.getElementById('objectiveLine');
+  if(missionMode==='rescue'){
+    objEl.style.display='block';
+    const stageNum = Math.min(rescueStage+1, rescueStageDefs.length);
+    const rescued = rescueTargets.filter(r=>r.rescued).length;
+    const cur = rescueTargets[rescueTargets.length-1];
+    if(cur && !cur.rescued && !cur.lost){
+      const hostage = entities.find(e=>e.id===cur.id);
+      objEl.textContent = `🧑‍🤝‍🧑 스테이지 ${stageNum}/${rescueStageDefs.length} - ${cur.name} HP ${hostage?Math.max(0,Math.round(hostage.hp)):'?'}/${hostage?hostage.maxHp:'?'}`;
+    } else {
+      objEl.textContent = `🧑‍🤝‍🧑 스테이지 완료! 구출 ${rescued}/${rescueStageDefs.length}`;
+    }
+  } else if(missionMode==='escort'){
+    const convoy = entities.find(e=>e.id===escortId);
+    objEl.style.display='block';
+    const pct = Math.round((escortWpIndex/Math.max(1,escortWaypoints.length-1))*100);
+    objEl.textContent = convoy ? `🚚 호송 진행 ${pct}% (HP ${Math.round(convoy.hp)}/${convoy.maxHp})` : '🚚 호송대 상태불명';
+  } else if(missionMode==='boss'){
+    const boss = entities.find(e=>e.id===bossId);
+    objEl.style.display='block';
+    objEl.textContent = boss ? `👹 보스 HP ${Math.max(0,Math.round(boss.hp))}/${boss.maxHp}` : '👹 보스 격파!';
+  } else if(missionMode==='courier'){
+    const remain = Math.max(0, courierDeadline-elapsed);
+    objEl.style.display='block';
+    objEl.textContent = `📨 전령 남은시간 ${Math.ceil(remain)}s`;
+    objEl.style.color = remain<20 ? 'var(--enemy)' : 'var(--gold)';
+  } else {
+    objEl.style.display='none';
+  }
+  if(missionMode==='defense'){
+    const remain = Math.max(0, DEFENSE_DURATION-elapsed);
+    const m=Math.floor(remain/60), s=Math.floor(remain%60);
+    clockEl.textContent = `🛡 생존 ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    clockEl.style.color = remain<30 ? 'var(--enemy)' : '';
+  } else {
+    const m=Math.floor(elapsed/60), s=Math.floor(elapsed%60);
+    clockEl.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    clockEl.style.color = '';
+  }
+}
+
+// ---------- MAIN LOOP ----------
+let last = performance.now(), running=false;
+function loop(now){
+  if(!running) return;
+  let dt = Math.min(0.05,(now-last)/1000); last=now;
+  if(devMode) dt *= devTimeScale;
+  if(!gameOver){
+    elapsed += dt;
+    refreshHeroCache();
+    for(const en of entities){ if(en.kind==='unit') updateUnit(en,dt); else updateBuilding(en,dt); }
+    entities = entities.filter(en=>!(en.dead && (en._t=(en._t||0)+dt)>1.2));
+    selection = selection.filter(en=>!en.dead);
+    if(missionMode!=='tutorial') updateAI(dt);
+    updateControlPoints(dt);
+    if(missionMode==='defense' && elapsed>=DEFENSE_DURATION){
+      const pHQ = entities.find(e=>e.team==='player'&&e.type==='hq'&&!e.dead);
+      if(pHQ) triggerSurvivalVictory();
+    }
+    checkMissionObjectives();
+    renderTopbar();
+    if(Math.floor(elapsed*2)!==Math.floor((elapsed-dt)*2)){
+      renderSelection();
+      if(selection.length<=1) renderActions();
+      renderHeroRoster();
+      renderSelectionBar();
+    }
+  }
+  updateCamera(dt);
+  ctx.save();
+  ctx.translate(-camera.x,-camera.y);
+  drawTerrain(); drawMines(); drawControlPoints(); drawCourierDest(); drawEntities(); drawProjectiles(dt); drawCastRings(); drawBuildGhost(); drawSelectionBox(); drawFormationPreview(); drawParticles(dt);
+  ctx.restore();
+  drawDustMotes();
+  drawVignette();
+  drawMinimap();
+  drawAttackMoveCursor();
+  drawFormationCursor();
+  drawTutorialBanner();
+  requestAnimationFrame(loop);
+}
+
+// ---------- START / RETURN ----------
+function startGame(fKey){
+  mouseOverCanvas = false;
+  screenMouse = {x:VIEW_W/2,y:VIEW_H/2};
+  keysDown = {};
+  buildMode = null; attackMoveMode = false; formationMode = false; formationDragging = false; formationStart = null; canvas.style.cursor='';
+  cheatBoxOpen = false; document.getElementById('cheatBox').style.display='none';
+  dragStart = null; mouse = {x:0,y:0,down:false};
+  const MISSION_MODE_MAP = {0:'tutorial', 1:'skirmish', 2:'defense', 3:'courier', 4:'rescue', 5:'escort', 6:'boss', 7:'finalwar'};
+  missionMode = MISSION_MODE_MAP[selectedMissionIndex] || 'skirmish';
+  playerFactionKey = fKey;
+  const rest = Object.keys(FACTIONS).filter(k=>k!==fKey);
+  enemyFactionKey = rest[Math.floor(Math.random()*rest.length)];
+  const pCol = FACTIONS[fKey].accent, eCol = FACTIONS[enemyFactionKey].accent;
+  document.documentElement.style.setProperty('--player', pCol);
+  document.documentElement.style.setProperty('--enemy', eCol);
+  document.getElementById('matchTitle').innerHTML =
+    `<span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${pCol};margin-right:5px;"></span>${FACTIONS[fKey].name}(나)
+     <span style="color:var(--text-dim);margin:0 6px;">VS</span>
+     <span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${eCol};margin-right:5px;"></span>${FACTIONS[enemyFactionKey].name}(적)
+     <span style="color:var(--text-dim);font-size:11px;margin-left:8px;">[${MISSIONS[selectedMissionIndex]}]</span>`;
+  setupMap();
+  const pHQ = entities.find(e=>e.team==='player'&&e.type==='hq');
+  if(pHQ){ camera.x = pHQ.x - VIEW_W/2; camera.y = pHQ.y - VIEW_H/2; clampCamera(); }
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('log').innerHTML='';
+  const diffName = DIFFICULTIES.find(d=>d.id===aiDifficulty).name;
+  log(`${FACTIONS[fKey].name} 대 ${FACTIONS[enemyFactionKey].name} — ${MISSIONS[selectedMissionIndex]} (AI: ${diffName}) 전투 시작!`,'player');
+  if(missionMode==='defense') log(`🛡 ${DEFENSE_DURATION/60}분 동안 본진을 지켜내면 승리합니다.`,'player');
+  if(missionMode==='rescue') log(`🧑‍🤝‍🧑 총 ${rescueStageDefs.length}개 스테이지로 나뉜 구출 작전입니다. 그녀는 아군이 가까이 없으면 움직이지 못하니 유닛을 옆에 붙여서 호위하며 본진까지 데려오세요. (실패해도 다음 스테이지로 넘어갑니다)`,'player');
+  if(missionMode==='escort') log('🚚 보급 수송대가 자동으로 목적지를 향해 이동합니다. 끝까지 지켜내세요.','player');
+  if(missionMode==='boss') log('👹 적진에 강력한 보스 유닛이 있습니다. 처치하면 승리합니다.','player');
+  if(missionMode==='courier') log(`📨 ${courierDeadline}초 안에 전령을 목적지(노란 원)까지 보내세요.`,'player');
+  if(missionMode==='finalwar') log('⚔ 양측 모두 이미 전력을 갖춘 상태로 시작하는 최종 결전입니다!','player');
+  if(missionMode==='tutorial') log('📘 튜토리얼을 시작합니다! 화면 상단의 안내를 따라해보세요. (적은 공격하지 않습니다)','player');
+  menuEl.style.display='none';
+  gameWrapEl.style.display='flex';
+  fitCanvas();
+  setTimeout(fitCanvas, 50);
+  setTimeout(()=>{ try{ canvas.focus(); }catch(e){} }, 60);
+  renderActions(); renderSelection(); renderHeroRoster(); renderDevPanel(); renderSelectionBar();
+  last = performance.now(); running=true;
+  requestAnimationFrame(loop);
+  startMusic();
+}
+document.getElementById('btnMusic').onclick = ()=>{ toggleMusic(); };
+document.getElementById('btnReturnMenu').onclick = ()=>{
+  running=false;
+  gameWrapEl.style.display='none';
+  menuEl.style.display='flex';
+  document.documentElement.style.setProperty('--player', '#3fd4c0');
+  document.documentElement.style.setProperty('--enemy', '#e35b6a');
+  renderPoints();
+  pauseMusic();
+};
+
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
